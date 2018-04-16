@@ -1,11 +1,9 @@
 buildscript {
-    ext.kotlin_version = '1.2.30'
-
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$KOTLIN"
     }
 }
 
@@ -15,17 +13,21 @@ version '1.0-SNAPSHOT'
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
-sourceCompatibility = 1.8
+sourceCompatibility = JVM_VERSION
 
 repositories {
     maven { url "https://dl.bintray.com/kotlin/exposed" }
+//    jcenter()
     mavenCentral()
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile 'org.jetbrains.exposed:exposed:0.10.2'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN"
+    compile "org.jetbrains.exposed:exposed:$EXPOSED"
+    compile "org.postgresql:postgresql:$POSTGRESQL"
+
+    testCompile "junit:junit:$JUNIT"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$KOTLIN"
 }
 
 compileKotlin {

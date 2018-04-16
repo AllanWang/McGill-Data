@@ -1,4 +1,7 @@
+package ca.allanwang.db.mcgill
+
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import org.jetbrains.exposed.sql.statements.UpdateStatement
 
 /**
@@ -59,7 +62,7 @@ object Students : Table(), DataMapper<Student> {
                 )
             }
 
-    override fun toTable(u: UpdateStatement, d: Student) {
+    override fun toTable(u: UpdateBuilder<Int>, d: Student) {
         u[id] = d.studentId
         u[shortUser] = d.shortUser
         u[longUser] = d.longUser
@@ -71,7 +74,7 @@ object Students : Table(), DataMapper<Student> {
      * Retrieve student by [Student.studentId]
      */
     operator fun get(id: Int): Student? =
-            selectData { this@Students.id eq id }
+            selectData { Students.id eq id }
 
     /**
      * Retrieve student by [Student.studentId], [Student.shortUser], or [Student.longUser]

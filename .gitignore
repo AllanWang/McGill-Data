@@ -4,6 +4,8 @@
 /local.properties
 .DS_Store
 /build
+/out
+priv.properties
 
 # Compiled class file
 *.class

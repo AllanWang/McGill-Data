@@ -1,3 +1,5 @@
+package ca.allanwang.db.mcgill
+
 import org.jetbrains.exposed.sql.Table
 
 object Courses : Table() {

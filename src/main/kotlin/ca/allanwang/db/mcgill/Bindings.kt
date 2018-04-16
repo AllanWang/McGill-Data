@@ -1,4 +1,7 @@
+package ca.allanwang.db.mcgill
+
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.statements.UpdateBuilder
 import org.jetbrains.exposed.sql.statements.UpdateStatement
 
 /**
@@ -21,7 +24,7 @@ interface DataMapper<T : Any> {
     /**
      * Given data, assign variables to table columns
      */
-    fun toTable(u: UpdateStatement, d: T)
+    fun toTable(u: UpdateBuilder<Int>, d: T)
 
     /**
      * Given data, return db query statement to find that data if it exists
@@ -31,17 +34,22 @@ interface DataMapper<T : Any> {
 
 /*
  * -----------------------------------------------------
- * DataMapper Extensions
+ * ca.allanwang.db.mcgill.DataMapper Extensions
  * -----------------------------------------------------
  */
 
 /**
  * Queries for data in db and updates the values
  */
-fun <T : Any, M> M.save(data: T): Int where M : DataMapper<T>, M : Table =
-        update({ mapper(data) }, 1) {
-            toTable(it, data)
-        }
+fun <T : Any, M> M.save(data: T): Int where M : DataMapper<T>, M : Table {
+    if (select({ mapper(data) }).empty()) {
+        insert { toTable(it, data) }
+        return 0
+    }
+    return update({ mapper(data) }) {
+        toTable(it, data)
+    }
+}
 
 /**
  * Queries for data in db and deletes it
