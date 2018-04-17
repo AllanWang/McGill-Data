@@ -12,6 +12,8 @@ class DbTest {
 
     @Test
     fun test() {
+
+        println("Connecting to ${Props.testDb} with ${Props.testUser}")
         Database.connect(url = Props.testDb,
                 user = Props.testUser,
                 password = Props.testPassword,

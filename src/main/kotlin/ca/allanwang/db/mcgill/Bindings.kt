@@ -2,7 +2,6 @@ package ca.allanwang.db.mcgill
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
-import org.jetbrains.exposed.sql.statements.UpdateStatement
 
 /**
  * Parameterless helper methods for data models
@@ -28,6 +27,7 @@ interface DataMapper<T : Any> {
 
     /**
      * Given data, return db query statement to find that data if it exists
+     * Mapping expression should compare a unique key within the table
      */
     fun SqlExpressionBuilder.mapper(data: T): Op<Boolean>
 }
@@ -39,7 +39,7 @@ interface DataMapper<T : Any> {
  */
 
 /**
- * Queries for data in db and updates the values
+ * Queries for a match in the db, and either updates the existing data or inserts a new one
  */
 fun <T : Any, M> M.save(data: T): Int where M : DataMapper<T>, M : Table {
     if (select({ mapper(data) }).empty()) {
