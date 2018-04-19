@@ -64,14 +64,18 @@ fun <T : Any> Query.mapSingle(mapper: (row: ResultRow) -> T): T? =
  * Create in extension function directly from [data] to update the required queries
  * to save to completion.
  */
-fun <T : Any, M> M.save(data: T): Int where M : DataReceiver<T>, M : Table {
-    if (select({ mapper(data) }).empty()) {
+fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
+    if (select({ mapper(data) }).empty())
         insert { toTable(it, data) }
-        return 0
-    }
-    return update({ mapper(data) }) {
-        toTable(it, data)
-    }
+    else
+        update({ mapper(data) }) {
+            toTable(it, data)
+        }
+}
+
+fun <T : Any, M> M.save(data: Collection<T>) where M : DataReceiver<T>, M : Table {
+    if (data.isNotEmpty())
+        batchInsert(data) { toTable(this, it) }
 }
 
 /**
@@ -82,8 +86,9 @@ fun <T : Any, M> M.save(data: T): Int where M : DataReceiver<T>, M : Table {
  * Create in extension function directly from [data] to update the required queries
  * to delete to completion.
  */
-fun <T : Any, M> M.delete(data: T): Int where M : DataReceiver<T>, M : Table =
-        deleteWhere { mapper(data) }
+fun <T : Any, M> M.delete(data: T) where M : DataReceiver<T>, M : Table {
+    deleteWhere { mapper(data) }
+}
 
 /*
  * -----------------------------------------------------

@@ -33,12 +33,11 @@ class DbTest {
 
             logger.addLogger(StdOutSqlLogger)
 
-            create(Users)
+            create(Users, Courses, UserCourses, Groups, UserGroups)
 
             val oldCount = Users.selectAll().count()
 
             val test1 = testUser(1)
-
 
             test1.save()
 

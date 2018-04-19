@@ -34,7 +34,7 @@ object Users : Table(), DataMapper<User> {
             email = row[email],
             faculty = row[faculty],
             givenName = row[givenName],
-            groups = emptyList() /* TODO update */,
+            groups = UserGroups[row[shortUser]],
             id = row[id],
             lastName = row[lastName],
             longUser = row[longUser],
@@ -63,7 +63,7 @@ object Users : Table(), DataMapper<User> {
     operator fun get(sam: String): User? =
             selectData { samMatcher(sam) }
 
-    fun toUserQuery(row:ResultRow): UserQuery =  UserQuery(shortUser = row[shortUser],
+    fun toUserQuery(row: ResultRow): UserQuery = UserQuery(shortUser = row[shortUser],
             longUser = row[longUser],
             id = row[id],
             email = row[email],
@@ -88,9 +88,11 @@ object Users : Table(), DataMapper<User> {
 fun User.save() {
     Users.save(this)
     UserCourses.save(this)
+    UserGroups.save(this)
 }
 
 fun User.delete() {
     Users.delete(this)
     UserCourses.delete(this)
+    UserGroups.delete(this)
 }

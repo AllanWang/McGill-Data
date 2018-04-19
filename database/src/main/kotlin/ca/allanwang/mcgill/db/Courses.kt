@@ -1,9 +1,6 @@
 package ca.allanwang.mcgill.db
 
-import ca.allanwang.mcgill.db.bindings.DataMapper
-import ca.allanwang.mcgill.db.bindings.delete
-import ca.allanwang.mcgill.db.bindings.mapWith
-import ca.allanwang.mcgill.db.bindings.selectDataCollection
+import ca.allanwang.mcgill.db.bindings.*
 import ca.allanwang.mcgill.models.data.Course
 import ca.allanwang.mcgill.models.data.Season
 import ca.allanwang.mcgill.models.data.Semester
@@ -24,8 +21,8 @@ fun Table.courseNameRef() = courseName() references Courses.courseName
 /**
  * Course detail per semester
  */
-object Courses : IntIdTable(), DataMapper<Course> {
-    val courseName = courseName()
+object Courses : Table(), DataMapper<Course> {
+    val courseName = courseName().primaryKey()
     val description = varchar("course_description", 200).nullable()
     val teacher = varchar("teacher", 20).nullable()
     val season = enumerationByName("season", 10, Season::class.java)
@@ -63,6 +60,7 @@ object Courses : IntIdTable(), DataMapper<Course> {
             selectDataCollection {
                 (Courses.season eq semester.season) and (Courses.year eq semester.year)
             }
+
 }
 
 fun Course.delete() = Courses.delete(this)
@@ -77,11 +75,12 @@ object UserCourses : IntIdTable() {
     operator fun get(sam: String): List<Course> {
         val shortUser = if (User.isShortUser(sam))
             sam else Users[sam]?.shortUser ?: return emptyList()
-        return Courses.select { UserCourses.shortUser eq shortUser }
+        return (Courses innerJoin UserCourses).select { UserCourses.shortUser eq shortUser }
                 .mapWith(Courses::toData)
     }
 
     fun save(user: User) {
+        Courses.save(user.courses)
         batchInsert(user.courses) {
             this[shortUser] = user.shortUser
             this[courseName] = it.courseName

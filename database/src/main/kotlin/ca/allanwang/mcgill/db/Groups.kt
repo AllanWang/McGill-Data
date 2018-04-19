@@ -1,8 +1,13 @@
 package ca.allanwang.mcgill.db
 
-import ca.allanwang.mcgill.db.bindings.shortUserRef
+import ca.allanwang.mcgill.db.bindings.DataMapper
+import ca.allanwang.mcgill.db.bindings.mapWith
+import ca.allanwang.mcgill.db.bindings.save
+import ca.allanwang.mcgill.models.data.Course
+import ca.allanwang.mcgill.models.data.User
 import org.jetbrains.exposed.dao.IntIdTable
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
 /*
  * -----------------------------------------
@@ -13,11 +18,40 @@ import org.jetbrains.exposed.sql.Table
 fun Table.groupName() = varchar("group_name", 30)
 fun Table.groupNameRef() = groupName() references Groups.groupName
 
-object Groups : Table() {
+object Groups : Table(), DataMapper<String> {
     val groupName = groupName().primaryKey()
+
+    override fun toData(row: ResultRow): String =
+            row[groupName]
+
+    override fun toTable(u: UpdateBuilder<Int>, d: String) {
+        u[groupName] = d
+    }
+
+    override fun SqlExpressionBuilder.mapper(data: String): Op<Boolean> =
+            (groupName eq data)
 }
 
 object UserGroups : IntIdTable() {
     val groupName = groupNameRef()
     val shortUser = shortUserRef()
+
+    operator fun get(sam: String): List<String> {
+        val shortUser = if (User.isShortUser(sam))
+            sam else Users[sam]?.shortUser ?: return emptyList()
+        return (Groups innerJoin UserGroups).select { UserGroups.shortUser eq shortUser }
+                .mapWith(Groups::toData)
+    }
+
+    fun save(user: User) {
+        Groups.save(user.groups)
+        batchInsert(user.groups) {
+            this[UserGroups.shortUser] = user.shortUser
+            this[UserGroups.groupName] = it
+        }
+    }
+
+    fun delete(user: User) {
+        deleteWhere { UserGroups.shortUser eq user.shortUser }
+    }
 }
