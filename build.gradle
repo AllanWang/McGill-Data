@@ -9,9 +9,6 @@ buildscript {
     }
 }
 
-group 'ca.allanwang'
-version '1.0-SNAPSHOT'
-
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
@@ -21,7 +18,6 @@ sourceCompatibility = kit.jvm
 
 repositories {
     maven { url "https://dl.bintray.com/kotlin/exposed" }
-//    jcenter()
     maven { url "https://jitpack.io" }
     mavenCentral()
 }
@@ -38,9 +34,54 @@ dependencies {
     testCompile kitDependency.kotlinTest
 }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = kit.jvm
-}
-compileTestKotlin {
-    kotlinOptions.jvmTarget = kit.jvm
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+    apply plugin: 'maven'
+
+    repositories {
+        maven { url "https://dl.bintray.com/kotlin/exposed" }
+        maven { url "https://jitpack.io" }
+        mavenCentral()
+    }
+
+    test {
+        dependsOn cleanTest
+        testLogging.showStandardStreams = true
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
+
+    dependencies {
+        compile kitDependency.kotlin
+        compile "ca.allanwang.kit:logger:$KIT"
+
+        testCompile kitDependency.junit
+        testCompile kitDependency.kotlinTest
+
+//        if (it.name != 'test')
+
+    }
+
+    compileKotlin {
+        kotlinOptions.jvmTarget = kit.jvm
+    }
+    compileTestKotlin {
+        kotlinOptions.jvmTarget = kit.jvm
+    }
+
 }
