@@ -4,14 +4,9 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
 /**
- * Unified data db mapping
+ * Table that can receive and handle data
  */
-interface DataMapper<T : Any> {
-    /**
-     * Given a query, map results to a data list
-     */
-    fun Query.toData(): List<T>
-
+interface DataReceiver<in T : Any> {
     /**
      * Given data, assign variables to table columns
      */
@@ -19,21 +14,57 @@ interface DataMapper<T : Any> {
 
     /**
      * Given data, return db query statement to find that data if it exists
-     * Mapping expression should compare a unique key within the table
+     * Mapping expression should be one to one
      */
     fun SqlExpressionBuilder.mapper(data: T): Op<Boolean>
 }
 
+/**
+ * Unified data db mapping
+ */
+interface DataMapper<T : Any> : DataReceiver<T> {
+    /**
+     * Given a result row, map to the data
+     */
+    fun toData(row: ResultRow): T
+
+}
+
 /*
  * -----------------------------------------------------
- * ca.allanwang.db.mcgill.DataMapper Extensions
+ * Query Extensions
+ * -----------------------------------------------------
+ */
+
+/**
+ * Allow any query to apply a mapping function
+ * No safety checks are made to ensure that the mapping is actually possible
+ */
+fun <T : Any> Query.mapWith(mapper: (row: ResultRow) -> T): List<T> =
+        map { mapper(it) }
+
+/**
+ * Check if element exists in iterator,
+ * and map the first one only if it exists
+ */
+fun <T : Any> Query.mapSingle(mapper: (row: ResultRow) -> T): T? =
+        iterator().run { if (hasNext()) mapper(next()) else null }
+
+/*
+ * -----------------------------------------------------
+ * DataReceiver Extensions
  * -----------------------------------------------------
  */
 
 /**
  * Queries for a match in the db, and either updates the existing data or inserts a new one
+ * Note that this only affects the table implementing the receiver!
+ * This may not fully save all the data in [data]
+ *
+ * Create in extension function directly from [data] to update the required queries
+ * to save to completion.
  */
-fun <T : Any, M> M.save(data: T): Int where M : DataMapper<T>, M : Table {
+fun <T : Any, M> M.save(data: T): Int where M : DataReceiver<T>, M : Table {
     if (select({ mapper(data) }).empty()) {
         insert { toTable(it, data) }
         return 0
@@ -45,13 +76,28 @@ fun <T : Any, M> M.save(data: T): Int where M : DataMapper<T>, M : Table {
 
 /**
  * Queries for data in db and deletes it
+ * Note that this only affects the table implementing the receiver!
+ * This may not fully delete all the data in [data]
+ *
+ * Create in extension function directly from [data] to update the required queries
+ * to delete to completion.
  */
-fun <T : Any, M> M.delete(data: T): Int where M : DataMapper<T>, M : Table =
+fun <T : Any, M> M.delete(data: T): Int where M : DataReceiver<T>, M : Table =
         deleteWhere { mapper(data) }
+
+/*
+ * -----------------------------------------------------
+ * DataMapper Extensions
+ * -----------------------------------------------------
+ */
 
 /**
  * Queries for one data model
  */
 fun <T : Any, M> M.selectData(where: SqlExpressionBuilder.() -> Op<Boolean>): T?
         where M : DataMapper<T>, M : FieldSet =
-        select(where).limit(1, 0).toData().getOrNull(0)
+        select(where).limit(1, 0).mapSingle(this::toData)
+
+fun <T : Any, M> M.selectDataCollection(where: SqlExpressionBuilder.() -> Op<Boolean>): List<T>
+        where M : DataMapper<T>, M : FieldSet =
+        select(where).map(this::toData)

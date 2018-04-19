@@ -1,21 +1,24 @@
 package ca.allanwang.mcgill.db
 
-import ca.allanwang.mcgill.db.bindings.DataMapper
-import ca.allanwang.mcgill.db.bindings.delete
-import ca.allanwang.mcgill.db.bindings.save
-import ca.allanwang.mcgill.db.bindings.selectData
+import ca.allanwang.mcgill.db.bindings.*
 import ca.allanwang.mcgill.models.data.User
 import ca.allanwang.mcgill.models.data.UserQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
+/*
+ * -----------------------------------------
+ * Shared Column definitions
+ * -----------------------------------------
+ */
+
+fun Table.shortUser() = varchar("short_user", 20)
+fun Table.shortUserRef() = shortUser() references Users.shortUser
+
 object Users : Table(), DataMapper<User> {
-    val shortUser = varchar("short_user", 20).primaryKey()
+    val shortUser = shortUser().primaryKey()
     val id = varchar("id", 20).uniqueIndex()
     val longUser = varchar("long_user", 30).uniqueIndex()
-    //TODO add table for courses
-    //TODO add table for groups
-    //TODO add table for preferredName
     val activeSince = long("active_since")
     val displayName = varchar("display_name", 30)
     val email = varchar("email", 30)
@@ -24,24 +27,19 @@ object Users : Table(), DataMapper<User> {
     val lastName = varchar("last_name", 20)
     val middleName = varchar("middle_name", 20).nullable()
 
-    override fun Query.toData(): List<User> =
-            map {
-                User(
-                        activeSince = it[activeSince],
-                        courses = emptyList() /* TODO update */,
-                        displayName = it[displayName],
-                        email = it[email],
-                        faculty = it[faculty],
-                        givenName = it[givenName],
-                        groups = emptyList() /* TODO update */,
-                        id = it[id],
-                        lastName = it[lastName],
-                        longUser = it[longUser],
-                        middleName = it[middleName],
-                        preferredName = emptyList() /* TODO update */,
-                        shortUser = it[shortUser]
-                )
-            }
+    override fun toData(row: ResultRow): User = User(
+            activeSince = row[activeSince],
+            courses = UserCourses[row[shortUser]],
+            displayName = row[displayName],
+            email = row[email],
+            faculty = row[faculty],
+            givenName = row[givenName],
+            groups = emptyList() /* TODO update */,
+            id = row[id],
+            lastName = row[lastName],
+            longUser = row[longUser],
+            middleName = row[middleName],
+            shortUser = row[shortUser])
 
     override fun toTable(u: UpdateBuilder<Int>, d: User) {
         u[activeSince] = d.activeSince
@@ -56,27 +54,26 @@ object Users : Table(), DataMapper<User> {
         u[shortUser] = d.shortUser
     }
 
+    private fun SqlExpressionBuilder.samMatcher(sam: String): Op<Boolean> =
+            (Users.longUser eq sam) or (Users.shortUser eq sam) or (Users.id eq sam)
+
     /**
      * Retrieve user by [User.id], [User.shortUser], or [User.longUser]
      */
     operator fun get(sam: String): User? =
-            selectData { (longUser eq sam) or (shortUser eq sam) or (id eq sam) }
+            selectData { samMatcher(sam) }
+
+    fun toUserQuery(row:ResultRow): UserQuery =  UserQuery(shortUser = row[shortUser],
+            longUser = row[longUser],
+            id = row[id],
+            email = row[email],
+            displayName = row[displayName])
 
     fun getUserQuery(sam: String): UserQuery? =
             slice(shortUser, longUser, id, email, displayName)
-                    .select { (longUser eq sam) or (shortUser eq sam) or (id eq sam) }
+                    .select { samMatcher(sam) }
                     .limit(1)
-                    .map {
-                        UserQuery(shortUser = it[shortUser],
-                                longUser = it[longUser],
-                                id = it[id],
-                                email = it[email],
-                                displayName = it[displayName])
-                    }.getOrNull(0)
-
-    fun test() {
-        (Users innerJoin Courses).slice(*Users.columns.toTypedArray(), Courses.courseName)
-    }
+                    .mapSingle(Users::toUserQuery)
 
     override fun SqlExpressionBuilder.mapper(data: User): Op<Boolean> =
             id eq data.id
@@ -88,6 +85,12 @@ object Users : Table(), DataMapper<User> {
  * Model bindings
  * -----------------------------------------------------
  */
-fun User.save() = Users.save(this)
+fun User.save() {
+    Users.save(this)
+    UserCourses.save(this)
+}
 
-fun User.delete() = Users.delete(this)
+fun User.delete() {
+    Users.delete(this)
+    UserCourses.delete(this)
+}

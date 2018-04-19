@@ -21,7 +21,6 @@ data class User(
         var faculty: String? = null,
         var groups: List<String> = emptyList(),
         var courses: List<Course> = emptyList(),
-        var preferredName: List<String> = emptyList(),
         var activeSince: Long = System.currentTimeMillis()
 ) : McGillModel {
 
@@ -46,6 +45,14 @@ data class User(
             longUser = longUser,
             email = email,
             displayName = displayName)
+
+    companion object {
+
+        private val shortUserRegex: Regex by lazy { Regex("[a-z]+[0-9]*") }
+
+        fun isShortUser(sam: String?):Boolean =
+                sam != null && shortUserRegex.matches(sam)
+    }
 }
 
 /**
