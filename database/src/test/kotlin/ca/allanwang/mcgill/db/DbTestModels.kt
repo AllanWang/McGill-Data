@@ -1,5 +1,7 @@
 package ca.allanwang.mcgill.db
 
+import ca.allanwang.mcgill.models.data.Course
+import ca.allanwang.mcgill.models.data.Season
 import ca.allanwang.mcgill.models.data.User
 import kotlin.test.assertEquals
 
@@ -11,6 +13,7 @@ fun testUser(id: Int) = User(
         givenName = "Unit",
         lastName = "Test $id",
         id = "test$id",
+        courses = listOf(Course("comp303", season = Season.FALL, year = 2018)),
         groups = listOf("Unit Test", "$id")
 )
 

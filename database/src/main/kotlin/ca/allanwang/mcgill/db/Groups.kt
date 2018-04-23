@@ -1,8 +1,12 @@
 package ca.allanwang.mcgill.db
 
 import ca.allanwang.mcgill.db.bindings.DataMapper
+import ca.allanwang.mcgill.db.bindings.DataReceiver
 import ca.allanwang.mcgill.db.bindings.mapWith
 import ca.allanwang.mcgill.db.bindings.save
+import ca.allanwang.mcgill.db.statements.batchInsertOnDuplicateKeyUpdate
+import ca.allanwang.mcgill.db.statements.batchInsertOrIgnore
+import ca.allanwang.mcgill.db.statements.insertOrUpdate
 import ca.allanwang.mcgill.models.data.Course
 import ca.allanwang.mcgill.models.data.User
 import org.jetbrains.exposed.dao.IntIdTable
@@ -24,7 +28,7 @@ object Groups : Table(), DataMapper<String> {
     override fun toData(row: ResultRow): String =
             row[groupName]
 
-    override fun toTable(u: UpdateBuilder<Int>, d: String) {
+    override fun toTable(u: UpdateBuilder<*>, d: String) {
         u[groupName] = d
     }
 
@@ -32,9 +36,9 @@ object Groups : Table(), DataMapper<String> {
             (groupName eq data)
 }
 
-object UserGroups : IntIdTable() {
-    val groupName = groupNameRef()
-    val shortUser = shortUserRef()
+object UserGroups : Table() {
+    val shortUser = shortUserRef().primaryKey(0)
+    val groupName = groupNameRef().primaryKey(1)
 
     operator fun get(sam: String): List<String> {
         val shortUser = if (User.isShortUser(sam))
@@ -44,8 +48,8 @@ object UserGroups : IntIdTable() {
     }
 
     fun save(user: User) {
-        Groups.save(user.groups)
-        batchInsert(user.groups) {
+        Groups.save(Groups.groupName, user.groups)
+        batchInsertOrIgnore(user.groups) {
             this[UserGroups.shortUser] = user.shortUser
             this[UserGroups.groupName] = it
         }

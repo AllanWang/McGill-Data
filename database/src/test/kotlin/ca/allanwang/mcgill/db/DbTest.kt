@@ -4,6 +4,7 @@ import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.test.Props
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils.create
+import org.jetbrains.exposed.sql.SchemaUtils.drop
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -32,6 +33,7 @@ class DbTest {
         transaction {
 
             logger.addLogger(StdOutSqlLogger)
+            drop(Users, Courses, UserCourses, Groups, UserGroups)
 
             create(Users, Courses, UserCourses, Groups, UserGroups)
 
@@ -48,9 +50,17 @@ class DbTest {
             test2.save()
 
             assertEquals(oldCount + 1, Users.selectAll().count())
+            println(UserGroups.selectAll().count())
+
             test2.testMatches(1)
+
             test2.delete()
             assertEquals(oldCount, Users.selectAll().count())
+
+        }
+        transaction {
+            drop(Users, Courses, UserCourses, Groups, UserGroups)
+
         }
     }
 }

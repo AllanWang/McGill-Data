@@ -184,7 +184,7 @@ object McGillLdap : McGillLdapContract, WithLogging() {
         members?.forEach { (name, semester) ->
             if (name == null) return@forEach
             if (semester == null) groups.add(name)
-            else courses.add(Course(name, semester.season, semester.year))
+            else courses.add(Course(name, season = semester.season, year = semester.year))
         }
 
         out.groups = groups

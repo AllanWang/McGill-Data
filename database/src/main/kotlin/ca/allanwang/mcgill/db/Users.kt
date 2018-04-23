@@ -26,6 +26,7 @@ object Users : Table(), DataMapper<User> {
     val givenName = varchar("given_name", 20)
     val lastName = varchar("last_name", 20)
     val middleName = varchar("middle_name", 20).nullable()
+//    val lastLdapSync = long("ldap_sync_time")
 
     override fun toData(row: ResultRow): User = User(
             activeSince = row[activeSince],
@@ -41,7 +42,7 @@ object Users : Table(), DataMapper<User> {
             middleName = row[middleName],
             shortUser = row[shortUser])
 
-    override fun toTable(u: UpdateBuilder<Int>, d: User) {
+    override fun toTable(u: UpdateBuilder<*>, d: User) {
         u[activeSince] = d.activeSince
         u[displayName] = d.displayName
         u[email] = d.email
@@ -86,13 +87,13 @@ object Users : Table(), DataMapper<User> {
  * -----------------------------------------------------
  */
 fun User.save() {
-    Users.save(this)
+    Users.save(Users.shortUser, this)
     UserCourses.save(this)
     UserGroups.save(this)
 }
 
 fun User.delete() {
-    Users.delete(this)
     UserCourses.delete(this)
     UserGroups.delete(this)
+    Users.delete(this)
 }

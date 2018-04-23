@@ -1,6 +1,7 @@
 package ca.allanwang.mcgill.db
 
 import ca.allanwang.mcgill.db.bindings.*
+import ca.allanwang.mcgill.db.statements.batchInsertOrIgnore
 import ca.allanwang.mcgill.models.data.Course
 import ca.allanwang.mcgill.models.data.Season
 import ca.allanwang.mcgill.models.data.Semester
@@ -36,7 +37,7 @@ object Courses : Table(), DataMapper<Course> {
             year = row[year])
 
 
-    override fun toTable(u: UpdateBuilder<Int>, d: Course) {
+    override fun toTable(u: UpdateBuilder<*>, d: Course) {
         u[courseName] = d.courseName
         u[description] = d.description
         u[teacher] = d.teacher
@@ -68,9 +69,9 @@ fun Course.delete() = Courses.delete(this)
 /**
  * Intermediate table connecting [Users] and [Courses]
  */
-object UserCourses : IntIdTable() {
-    val shortUser = shortUserRef()
-    val courseName = courseNameRef()
+object UserCourses : Table() {
+    val shortUser = shortUserRef().primaryKey(0)
+    val courseName = courseNameRef().primaryKey(1)
 
     operator fun get(sam: String): List<Course> {
         val shortUser = if (User.isShortUser(sam))
@@ -81,7 +82,7 @@ object UserCourses : IntIdTable() {
 
     fun save(user: User) {
         Courses.save(user.courses)
-        batchInsert(user.courses) {
+        batchInsertOrIgnore(user.courses) {
             this[shortUser] = user.shortUser
             this[courseName] = it.courseName
         }

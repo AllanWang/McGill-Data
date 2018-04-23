@@ -1,5 +1,6 @@
 package ca.allanwang.mcgill.db.bindings
 
+import ca.allanwang.mcgill.db.statements.insertOrUpdate
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
@@ -10,7 +11,7 @@ interface DataReceiver<in T : Any> {
     /**
      * Given data, assign variables to table columns
      */
-    fun toTable(u: UpdateBuilder<Int>, d: T)
+    fun toTable(u: UpdateBuilder<*>, d: T)
 
     /**
      * Given data, return db query statement to find that data if it exists
@@ -73,9 +74,20 @@ fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
         }
 }
 
+fun <T : Any, M> M.save(key: Column<*> ,data: T) where M : DataReceiver<T>, M : Table {
+    insertOrUpdate(key) { toTable(it, data) }
+}
+
 fun <T : Any, M> M.save(data: Collection<T>) where M : DataReceiver<T>, M : Table {
-    if (data.isNotEmpty())
-        batchInsert(data) { toTable(this, it) }
+//    if (data.isNotEmpty())
+//        batchInsert(data) { toTable(this, it) }
+    data.forEach { save(it) } // todo improve
+}
+
+fun <T : Any, M> M.save(key: Column<*>, data: Collection<T>) where M : DataReceiver<T>, M : Table {
+//    if (data.isNotEmpty())
+//        batchInsert(data) { toTable(this, it) }
+    data.forEach { save(key, it) } // todo improve
 }
 
 /**

@@ -1,10 +1,11 @@
 *.iml
-/.idea
+.idea/
 .gradle
 /local.properties
 .DS_Store
-/build
-/out
+build/
+out/
+bin/
 priv.properties
 
 # Compiled class file
