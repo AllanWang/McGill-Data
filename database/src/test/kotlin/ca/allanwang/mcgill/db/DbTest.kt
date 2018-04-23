@@ -33,13 +33,15 @@ class DbTest {
         transaction {
 
             logger.addLogger(StdOutSqlLogger)
-            drop(Users, Courses, UserCourses, Groups, UserGroups)
+//            drop(Users, Courses, UserCourses, Groups, UserGroups)
 
             create(Users, Courses, UserCourses, Groups, UserGroups)
 
-            val oldCount = Users.selectAll().count()
-
             val test1 = testUser(1)
+
+            test1.delete() // clean slate
+
+            val oldCount = Users.selectAll().count()
 
             test1.save()
 
@@ -50,16 +52,11 @@ class DbTest {
             test2.save()
 
             assertEquals(oldCount + 1, Users.selectAll().count())
-            println(UserGroups.selectAll().count())
 
             test2.testMatches(1)
 
             test2.delete()
             assertEquals(oldCount, Users.selectAll().count())
-
-        }
-        transaction {
-            drop(Users, Courses, UserCourses, Groups, UserGroups)
 
         }
     }
