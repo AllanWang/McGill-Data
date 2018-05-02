@@ -8,19 +8,9 @@ import org.jetbrains.exposed.sql.statements.BatchInsertStatement
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 class BatchInsertUpdateOnDuplicate(table: Table,
-                                   val onDupUpdate: List<Column<*>>) : BatchInsertStatement(table, false) {
-    override fun prepareSQL(transaction: Transaction): String {
-        return super.prepareSQL(transaction) + onDuplicateUpdate(transaction)
-    }
-
-    private fun onDuplicateUpdate(transaction: Transaction): String {
-        if (onDupUpdate.isEmpty())
-            return ""
-        val ids = onDupUpdate.map { transaction.identity(it) }
-        val fullId = ids.joinToString()
-        val updater = ids.joinToString(postfix = ";") { "$it=EXCLUDED.$it" }
-        return " ON CONFLICT ($fullId) DO UPDATE SET $updater"
-    }
+                                   private val onDupUpdate: List<Column<*>>) : BatchInsertStatement(table, false) {
+    override fun prepareSQL(transaction: Transaction): String =
+            PostgresStatements.update(super.prepareSQL(transaction), onDupUpdate, transaction)
 }
 
 fun <T : Table, E> T.batchInsertOnDuplicateKeyUpdate(data: List<E>, onDupUpdateColumns: List<Column<*>>, body: BatchInsertUpdateOnDuplicate.(E) -> Unit): List<Int> {

@@ -1,11 +1,14 @@
 package ca.allanwang.mcgill.db.bindings
 
+import ca.allanwang.mcgill.db.statements.batchInsertOnDuplicateKeyUpdate
+import ca.allanwang.mcgill.db.statements.batchInsertOrIgnore
 import ca.allanwang.mcgill.db.statements.insertOrUpdate
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
+
 /**
- * Table that can receive and handle data
+ * Table that can receive and save data
  */
 interface DataReceiver<in T : Any> {
     /**
@@ -14,20 +17,22 @@ interface DataReceiver<in T : Any> {
     fun toTable(u: UpdateBuilder<*>, d: T)
 
     /**
+     * List of columns to check against during updates
+     */
+    val uniqueUpdateColumns: List<Column<*>>
+
+    /**
      * Given data, return db query statement to find that data if it exists
      * Mapping expression should be one to one
      */
     fun SqlExpressionBuilder.mapper(data: T): Op<Boolean>
 }
 
-/**
- * Unified data db mapping
- */
-interface DataMapper<T : Any> : DataReceiver<T> {
-    /**
-     * Given a result row, map to the data
-     */
-    fun toData(row: ResultRow): T
+interface OneToManyReceiver<in T : Any, V : Any> {
+
+    fun toTable(u: UpdateBuilder<*>, one: T, many: V)
+
+    fun getMany(one: T): List<V>
 
 }
 
@@ -58,36 +63,21 @@ fun <T : Any> Query.mapSingle(mapper: (row: ResultRow) -> T): T? =
  */
 
 /**
- * Queries for a match in the db, and either updates the existing data or inserts a new one
- * Note that this only affects the table implementing the receiver!
- * This may not fully save all the data in [data]
- *
- * Create in extension function directly from [data] to update the required queries
- * to save to completion.
+ * Save data, overwriting if there is a conflict in the provided columns
  */
 fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
-    if (select({ mapper(data) }).empty())
-        insert { toTable(it, data) }
-    else
-        update({ mapper(data) }) {
-            toTable(it, data)
-        }
+    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
 }
 
-fun <T : Any, M> M.save(key: Column<*>, data: T) where M : DataReceiver<T>, M : Table {
-    insertOrUpdate(key) { toTable(it, data) }
+fun <T : Any, M> M.save(data: List<T>) where M : DataReceiver<T>, M : Table {
+    batchInsertOnDuplicateKeyUpdate(data, uniqueUpdateColumns) { toTable(this, it) }
 }
 
-fun <T : Any, M> M.save(data: Collection<T>) where M : DataReceiver<T>, M : Table {
-//    if (data.isNotEmpty())
-//        batchInsert(data, true) { toTable(this, it) }
-    data.forEach { save(it) } // todo improve
-}
-
-fun <T : Any, M> M.save(key: Column<*>, data: Collection<T>) where M : DataReceiver<T>, M : Table {
-//    if (data.isNotEmpty())
-//        batchInsert(data) { toTable(this, it) }
-    data.forEach { save(key, it) } // todo improve
+fun <T : Any, V : Any, M, C> M.save(data: T, childTable: C)
+        where M : OneToManyReceiver<T, V>, M : Table,
+              C : DataReceiver<V>, C : Table {
+    childTable.save(getMany(data))
+    batchInsertOrIgnore(getMany(data)) { toTable(this, data, it) }
 }
 
 /**
@@ -101,20 +91,3 @@ fun <T : Any, M> M.save(key: Column<*>, data: Collection<T>) where M : DataRecei
 fun <T : Any, M> M.delete(data: T) where M : DataReceiver<T>, M : Table {
     deleteWhere { mapper(data) }
 }
-
-/*
- * -----------------------------------------------------
- * DataMapper Extensions
- * -----------------------------------------------------
- */
-
-/**
- * Queries for one data model
- */
-fun <T : Any, M> M.selectData(where: SqlExpressionBuilder.() -> Op<Boolean>): T?
-        where M : DataMapper<T>, M : FieldSet =
-        select(where).limit(1, 0).mapSingle(this::toData)
-
-fun <T : Any, M> M.selectDataCollection(where: SqlExpressionBuilder.() -> Op<Boolean>): List<T>
-        where M : DataMapper<T>, M : FieldSet =
-        select(where).map(this::toData)

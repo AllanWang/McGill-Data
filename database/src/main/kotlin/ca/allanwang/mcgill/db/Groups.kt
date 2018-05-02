@@ -1,7 +1,7 @@
 package ca.allanwang.mcgill.db
 
-import ca.allanwang.mcgill.db.bindings.DataMapper
-import ca.allanwang.mcgill.db.bindings.mapWith
+import ca.allanwang.mcgill.db.bindings.DataReceiver
+import ca.allanwang.mcgill.db.bindings.OneToManyReceiver
 import ca.allanwang.mcgill.db.bindings.save
 import ca.allanwang.mcgill.db.statements.batchInsertOrIgnore
 import ca.allanwang.mcgill.models.data.User
@@ -17,38 +17,29 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
 fun Table.groupName() = varchar("group_name", 30)
 fun Table.groupNameRef() = groupName() references Groups.groupName
 
-object Groups : Table(), DataMapper<String> {
+object Groups : Table(), DataReceiver<String> {
     val groupName = groupName().primaryKey()
-
-    override fun toData(row: ResultRow): String =
-            row[groupName]
 
     override fun toTable(u: UpdateBuilder<*>, d: String) {
         u[groupName] = d
     }
 
+    override val uniqueUpdateColumns: List<Column<*>> = listOf(groupName)
+
     override fun SqlExpressionBuilder.mapper(data: String): Op<Boolean> =
             (groupName eq data)
 }
 
-object UserGroups : Table() {
+object UserGroups : Table(), OneToManyReceiver<User, String> {
     val shortUser = shortUserRef().primaryKey(0)
     val groupName = groupNameRef().primaryKey(1)
 
-    operator fun get(sam: String): List<String> {
-        val shortUser = if (User.isShortUser(sam))
-            sam else Users[sam]?.shortUser ?: return emptyList()
-        return (Groups innerJoin UserGroups).select { UserGroups.shortUser eq shortUser }
-                .mapWith(Groups::toData)
+    override fun toTable(u: UpdateBuilder<*>, one: User, many: String) {
+        u[shortUser] = one.shortUser
+        u[groupName] = many
     }
 
-    fun save(user: User) {
-        Groups.save(Groups.groupName, user.groups)
-        batchInsertOrIgnore(user.groups) {
-            this[UserGroups.shortUser] = user.shortUser
-            this[UserGroups.groupName] = it
-        }
-    }
+    override fun getMany(one: User): List<String> = one.groups
 
     fun delete(user: User) {
         deleteWhere { UserGroups.shortUser eq user.shortUser }

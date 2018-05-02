@@ -1,10 +1,10 @@
 package ca.allanwang.mcgill.db
 
-import ca.allanwang.mcgill.db.bindings.*
-import ca.allanwang.mcgill.db.statements.batchInsertOrIgnore
+import ca.allanwang.mcgill.db.bindings.DataReceiver
+import ca.allanwang.mcgill.db.bindings.OneToManyReceiver
+import ca.allanwang.mcgill.db.bindings.delete
 import ca.allanwang.mcgill.models.data.Course
 import ca.allanwang.mcgill.models.data.Season
-import ca.allanwang.mcgill.models.data.Semester
 import ca.allanwang.mcgill.models.data.User
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
@@ -17,24 +17,17 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
 fun Table.courseName() = varchar("course_name", 10)
 fun Table.courseNameRef() = courseName() references Courses.courseName
+fun Table.courseNameCascade() = courseName().references(Courses.courseName, ReferenceOption.CASCADE)
 
 /**
  * Course detail per semester
  */
-object Courses : Table(), DataMapper<Course> {
+object Courses : Table(), DataReceiver<Course> {
     val courseName = courseName().primaryKey()
     val description = varchar("course_description", 200).nullable()
     val teacher = varchar("teacher", 20).nullable()
     val season = enumerationByName("season", 10, Season::class.java)
     val year = integer("year")
-
-    override fun toData(row: ResultRow): Course = Course(
-            courseName = row[courseName],
-            description = row[description],
-            teacher = row[teacher],
-            season = row[season],
-            year = row[year])
-
 
     override fun toTable(u: UpdateBuilder<*>, d: Course) {
         u[courseName] = d.courseName
@@ -47,45 +40,27 @@ object Courses : Table(), DataMapper<Course> {
     override fun SqlExpressionBuilder.mapper(data: Course): Op<Boolean> =
             (courseName eq data.courseName) and (year eq data.year)
 
-    /**
-     * Retrieve list of courses by course name
-     */
-    operator fun get(courseName: String): List<Course> =
-            selectDataCollection { Courses.courseName eq courseName }
-
-    /**
-     * Retrieve list of courses by semester
-     */
-    operator fun get(semester: Semester): List<Course> =
-            selectDataCollection {
-                (Courses.season eq semester.season) and (Courses.year eq semester.year)
-            }
-
+    override val uniqueUpdateColumns: List<Column<*>> = listOf(courseName)
 }
 
-fun Course.delete() = Courses.delete(this)
+fun Course.delete() {
+    UserCourses.deleteWhere { UserCourses.courseName eq courseName }
+    Courses.delete(this)
+}
 
 /**
  * Intermediate table connecting [Users] and [Courses]
  */
-object UserCourses : Table() {
+object UserCourses : Table(), OneToManyReceiver<User, Course> {
     val shortUser = shortUserRef().primaryKey(0)
-    val courseName = courseNameRef().primaryKey(1)
+    val courseName = courseNameCascade().primaryKey(1)
 
-    operator fun get(sam: String): List<Course> {
-        val shortUser = if (User.isShortUser(sam))
-            sam else Users[sam]?.shortUser ?: return emptyList()
-        return (Courses innerJoin UserCourses).select { UserCourses.shortUser eq shortUser }
-                .mapWith(Courses::toData)
+    override fun toTable(u: UpdateBuilder<*>, one: User, many: Course) {
+        u[shortUser] = one.shortUser
+        u[courseName] = many.courseName
     }
 
-    fun save(user: User) {
-        Courses.save(user.courses)
-        batchInsertOrIgnore(user.courses) {
-            this[shortUser] = user.shortUser
-            this[courseName] = it.courseName
-        }
-    }
+    override fun getMany(one: User): List<Course> = one.courses
 
     fun delete(user: User) {
         deleteWhere { UserCourses.shortUser eq user.shortUser }

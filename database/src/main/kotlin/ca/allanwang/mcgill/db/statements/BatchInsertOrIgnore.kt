@@ -7,9 +7,8 @@ import org.jetbrains.exposed.sql.statements.BatchInsertStatement
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 class BatchInsertOrIgnore(table: Table) : BatchInsertStatement(table, false) {
-    override fun prepareSQL(transaction: Transaction): String {
-        return "${super.prepareSQL(transaction)} ON CONFLICT DO NOTHING"
-    }
+    override fun prepareSQL(transaction: Transaction): String =
+            PostgresStatements.ignore(super.prepareSQL(transaction))
 }
 
 fun <T : Table, E> T.batchInsertOrIgnore(data: List<E>, body: BatchInsertOrIgnore.(E) -> Unit): List<Int> {
