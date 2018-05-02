@@ -2,7 +2,9 @@ package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.Users
-import ca.allanwang.mcgill.graphql.kotlin.*
+import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
+import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
+import ca.allanwang.mcgill.graphql.kotlin.toCamel
 import graphql.Scalars
 import graphql.language.Field
 import graphql.schema.*
@@ -11,14 +13,14 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 
 object UserWiring : TableWiring(Users,
-        singleQueryArgs = ArgEq.with(Users.shortUser,
-                Users.longUser,
-                Users.id),
-        listQueryArgs = ArgEq.with(Users.shortUser,
-                Users.longUser,
-                Users.id,
-                Users.email,
-                Users.faculty),
+//        singleQueryArgs = ArgEq.with(Users.shortUser,
+//                Users.longUser,
+//                Users.id),
+//        listQueryArgs = ArgEq.with(Users.shortUser,
+//                Users.longUser,
+//                Users.id,
+//                Users.email,
+//                Users.faculty),
         allowSelectAll = true)
 
 
@@ -47,7 +49,9 @@ abstract class TableWiring(private val table: Table,
      */
     fun fetch(env: DataFetchingEnvironment): List<Map<String, Any?>> = env.run {
         transaction {
-            select(where(), limit(), dbFields())
+            val s = select(where(), limit(), dbFields())
+            log.info("Selected $s")
+            s
         }
     }
 
@@ -146,7 +150,7 @@ abstract class TableWiring(private val table: Table,
         const val DEFAULT_QUERY_SIZE = 20
 
         val defaultListArgs: List<GraphQLArgument> = listOf(
-                graphQLIntArgument("limit", "Cap the max list output size")
+//                graphQLIntArgument("limit", "Cap the max list output size")
 //                graphQLArgument("orderBy", graphQLInputObjectType("Order") {
 //                    field(graphQLInputStringField("field", "Column key to sort by"))
 //                    field(graphQLInputObjectField("direction",
