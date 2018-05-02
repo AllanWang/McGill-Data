@@ -1,6 +1,7 @@
 package ca.allanwang.mcgill.graphql.kotlin
 
-import graphql.schema.DataFetchingEnvironment
+import com.google.common.base.CaseFormat
 
-fun <T : Any> DataFetchingEnvironment.arg(key: String): T? = arguments[key] as? T
-fun <T : Any> DataFetchingEnvironment.arg(key: String, default: T): T = arguments[key] as? T ?: default
+fun String.toCamel(): String = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, this)
+fun String.toUnderscore(): String = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this)
+
