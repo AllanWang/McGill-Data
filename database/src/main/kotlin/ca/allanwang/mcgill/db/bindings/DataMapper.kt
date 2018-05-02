@@ -74,13 +74,13 @@ fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
         }
 }
 
-fun <T : Any, M> M.save(key: Column<*> ,data: T) where M : DataReceiver<T>, M : Table {
+fun <T : Any, M> M.save(key: Column<*>, data: T) where M : DataReceiver<T>, M : Table {
     insertOrUpdate(key) { toTable(it, data) }
 }
 
 fun <T : Any, M> M.save(data: Collection<T>) where M : DataReceiver<T>, M : Table {
 //    if (data.isNotEmpty())
-//        batchInsert(data) { toTable(this, it) }
+//        batchInsert(data, true) { toTable(this, it) }
     data.forEach { save(it) } // todo improve
 }
 
