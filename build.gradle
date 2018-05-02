@@ -6,6 +6,8 @@ buildscript {
     dependencies {
         classpath "ca.allanwang:kit:$KIT"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$KOTLIN"
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$KOTLIN"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$SPRING_BOOT"
     }
 }
 
@@ -19,7 +21,8 @@ sourceCompatibility = kit.jvm
 repositories {
     maven { url "https://dl.bintray.com/kotlin/exposed" }
     maven { url "https://jitpack.io" }
-    mavenCentral()
+    maven { url  "https://dl.bintray.com/pgutkowski/Maven" }
+    jcenter()
 }
 
 dependencies {
