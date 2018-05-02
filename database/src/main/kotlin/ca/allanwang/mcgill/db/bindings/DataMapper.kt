@@ -91,3 +91,15 @@ fun <T : Any, V : Any, M, C> M.save(data: T, childTable: C)
 fun <T : Any, M> M.delete(data: T) where M : DataReceiver<T>, M : Table {
     deleteWhere { mapper(data) }
 }
+
+/**
+ * Replicate an existing table column
+ * If an index is supplied, the value will be cascaded
+ */
+fun <C> Table.referenceCol(ref: Column<C>, index: Int = -1): Column<C> =
+        registerColumn<C>(ref.name, ref.columnType).run {
+            if (index >= 0)
+                primaryKey(index).references(ref, ReferenceOption.CASCADE)
+            else
+                references(ref)
+        }

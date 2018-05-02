@@ -11,13 +11,8 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
  * Shared Column definitions
  * -----------------------------------------
  */
-
-fun Table.shortUser() = varchar("short_user", 20)
-fun Table.shortUserRef(option:ReferenceOption? = null) =
-        shortUser().references(Users.shortUser, option)
-
 object Users : Table(), DataReceiver<User> {
-    val shortUser = shortUser().primaryKey()
+    val shortUser = varchar("short_user", 20).primaryKey()
     val id = varchar("id", 20).uniqueIndex()
     val longUser = varchar("long_user", 30).uniqueIndex()
     val activeSince = long("active_since")
@@ -59,7 +54,7 @@ object Users : Table(), DataReceiver<User> {
  * -----------------------------------------------------
  */
 fun User.save() {
-    Users.save(Users.shortUser, this)
+    Users.save(this)
     UserCourses.save(this, Courses)
     UserGroups.save(this, Groups)
 }

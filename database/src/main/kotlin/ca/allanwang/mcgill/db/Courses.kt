@@ -3,6 +3,7 @@ package ca.allanwang.mcgill.db
 import ca.allanwang.mcgill.db.bindings.DataReceiver
 import ca.allanwang.mcgill.db.bindings.OneToManyReceiver
 import ca.allanwang.mcgill.db.bindings.delete
+import ca.allanwang.mcgill.db.bindings.referenceCol
 import ca.allanwang.mcgill.models.data.Course
 import ca.allanwang.mcgill.models.data.Season
 import ca.allanwang.mcgill.models.data.User
@@ -14,16 +15,11 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
  * Shared Column definitions
  * -----------------------------------------
  */
-
-fun Table.courseName() = varchar("course_name", 10)
-fun Table.courseNameRef() = courseName() references Courses.courseName
-fun Table.courseNameCascade() = courseName().references(Courses.courseName, ReferenceOption.CASCADE)
-
 /**
  * Course detail per semester
  */
 object Courses : Table(), DataReceiver<Course> {
-    val courseName = courseName().primaryKey()
+    val courseName = varchar("course_name", 10).primaryKey()
     val description = varchar("course_description", 200).nullable()
     val teacher = varchar("teacher", 20).nullable()
     val season = enumerationByName("season", 10, Season::class.java)
@@ -52,8 +48,8 @@ fun Course.delete() {
  * Intermediate table connecting [Users] and [Courses]
  */
 object UserCourses : Table(), OneToManyReceiver<User, Course> {
-    val shortUser = shortUserRef().primaryKey(0)
-    val courseName = courseNameCascade().primaryKey(1)
+    val shortUser = referenceCol(Users.shortUser, 0)
+    val courseName = referenceCol(Courses.courseName, 1)
 
     override fun toTable(u: UpdateBuilder<*>, one: User, many: Course) {
         u[shortUser] = one.shortUser
