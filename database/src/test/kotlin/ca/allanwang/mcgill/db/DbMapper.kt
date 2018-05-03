@@ -27,9 +27,11 @@ class DbMapper {
                     .slice(TestUsers.columns + TestGroups.columns)
                     .selectAll()
                     .readMap {
-                        attrs(TestUsers.columns)
-                        list("groups") {
-                            attrs(TestGroups.columns)
+                        list("users") {
+                            attrs(TestUsers.columns)
+                            list("groups") {
+                                attrs(TestGroups.columns)
+                            }
                         }
                     }
 
