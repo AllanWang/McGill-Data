@@ -1,15 +1,16 @@
 package ca.allanwang.mcgill.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.bindings.DbConfigs
-import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.db.bindings.getMap
 import ca.allanwang.mcgill.db.bindings.stdlog
+import ca.allanwang.mcgill.db.bindings.toMap
+import ca.allanwang.mcgill.db.internal.DbSetup
 import ca.allanwang.mcgill.db.tables.*
-import ca.allanwang.mcgill.test.Props
-import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.BeforeClass
 import org.junit.Test
@@ -18,18 +19,9 @@ import kotlin.test.assertEquals
 class DbTest {
 
     companion object : WithLogging() {
-
         @BeforeClass
         @JvmStatic
-        fun before() {
-            val configs: DbConfigs = object : DbConfigs {
-                override val db: String = Props.testDb
-                override val dbUser: String = Props.testDbUser
-                override val dbPassword: String = Props.testDbPassword
-                override val dbDriver: String = Props.testDriver
-            }
-            configs.connect()
-        }
+        fun before() = DbSetup.connect()
     }
 
     private fun Table.assertCount(count: Int, message: String? = null) =
@@ -50,13 +42,13 @@ class DbTest {
         transaction {
 
             stdlog()
-            (TestUsers.innerJoin(TestUserGroups, { id }, { userId })
-                    .innerJoin(TestGroups, { TestUserGroups.groupName }, { name }))
-//                    .slice(TestUsers.columns + TestGroups.columns)
+            (TestUsers innerJoin TestUserGroups innerJoin TestGroups)
+                    .slice(TestUsers.columns + TestGroups.columns)
 //                    .select {
 //                        (TestUsers.id eq TestUserGroups.userId) and (TestGroups.name eq TestUserGroups.groupName)
 //                    }
-                    .selectAll()
+                    .select { TestUsers.id eq "utest2" }
+                    .map { it.toMap(TestUsers.columns + TestGroups.columns) }
                     .forEach { println(it) }
         }
     }

@@ -48,3 +48,6 @@ fun Table.getMap(columns: Collection<Column<*>> = this.columns,
         }
 
 fun Transaction.stdlog() = logger.addLogger(StdOutSqlLogger)
+
+fun ResultRow.toMap(columns: Collection<Column<*>>): Map<String, Any?> =
+        columns.map { it.toSQL(QueryBuilder(false)) to this[it] }.toMap()
