@@ -1,8 +1,5 @@
 package ca.allanwang.mcgill.db.bindings
 
-import ca.allanwang.mcgill.db.statements.batchInsertOnDuplicateKeyUpdate
-import ca.allanwang.mcgill.db.statements.batchInsertOrIgnore
-import ca.allanwang.mcgill.db.statements.insertOrUpdate
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
@@ -49,7 +46,7 @@ interface ColMapper {
     fun colMap(): Map<Column<*>, Any?>
 }
 
-fun ColMapper.matches(map:Map<String, Any?>): Boolean {
+fun ColMapper.matches(map: Map<String, Any?>): Boolean {
     val colMap = colMap()
     if (colMap.size != map.size)
         return false
@@ -66,11 +63,13 @@ fun ColMapper.matches(map:Map<String, Any?>): Boolean {
  * Save data, overwriting if there is a conflict in the provided columns
  */
 fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
-    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
+    replace { toTable(it, data) }
+//    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
 }
 
 fun <T : Any, M> M.save(data: List<T>) where M : DataReceiver<T>, M : Table {
-    batchInsertOnDuplicateKeyUpdate(data, uniqueUpdateColumns) { toTable(this, it) }
+    data.forEach { save(it) }
+//    batchInsertOnDuplicateKeyUpdate(data, uniqueUpdateColumns) { toTable(this, it) }
 }
 
 /**
@@ -83,7 +82,8 @@ fun <T : Any, V : Any, M, C> M.save(data: T, childTable: C)
         where M : OneToManyReceiver<T, V>, M : Table,
               C : DataReceiver<V>, C : Table {
     childTable.save(getMany(data))
-    batchInsertOrIgnore(getMany(data)) { toTable(this, data, it) }
+    batchInsert(getMany(data), true) { toTable(this, data, it) }
+//    batchInsertOrIgnore(getMany(data)) { toTable(this, data, it) }
 }
 
 /**

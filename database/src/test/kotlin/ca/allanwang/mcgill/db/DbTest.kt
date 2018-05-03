@@ -5,6 +5,7 @@ import ca.allanwang.mcgill.db.bindings.getMap
 import ca.allanwang.mcgill.db.bindings.stdlog
 import ca.allanwang.mcgill.db.bindings.toMap
 import ca.allanwang.mcgill.db.internal.DbSetup
+import ca.allanwang.mcgill.db.internal.testTransaction
 import ca.allanwang.mcgill.db.tables.*
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
@@ -37,33 +38,18 @@ class DbTest {
         TestUserGroups.assertCount(userCount * 2)
     }
 
-    @Test
-    fun testRead() {
-        transaction {
 
-            stdlog()
-            (TestUsers innerJoin TestUserGroups innerJoin TestGroups)
-                    .slice(TestUsers.columns + TestGroups.columns)
-//                    .select {
-//                        (TestUsers.id eq TestUserGroups.userId) and (TestGroups.name eq TestUserGroups.groupName)
-//                    }
-                    .select { TestUsers.id eq "utest2" }
-                    .map { it.toMap(TestUsers.columns + TestGroups.columns) }
-                    .forEach { println(it) }
+    @Test
+    fun batchInsert() {
+        testTransaction {
+            testUser(19).save()
         }
     }
 
     @Test
     fun test() {
 
-        transaction {
-
-            stdlog()
-
-            // start with a clean slate
-            drop(TestUsers, TestGroups, TestUserGroups)
-
-            create(TestUsers, TestGroups, TestUserGroups)
+        testTransaction {
 
             assertUserCount(0)
 

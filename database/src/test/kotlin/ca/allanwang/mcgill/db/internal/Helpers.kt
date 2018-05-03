@@ -3,9 +3,18 @@ package ca.allanwang.mcgill.db.internal
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.DbConfigs
 import ca.allanwang.mcgill.db.bindings.connect
+import ca.allanwang.mcgill.db.bindings.stdlog
+import ca.allanwang.mcgill.db.tables.TestGroups
+import ca.allanwang.mcgill.db.tables.TestUserGroups
+import ca.allanwang.mcgill.db.tables.TestUsers
 import ca.allanwang.mcgill.test.Props
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.SchemaUtils.create
+import org.jetbrains.exposed.sql.SchemaUtils.drop
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.transactions.transaction
 
-object DbSetup  {
+object DbSetup {
     fun connect() {
         val configs: DbConfigs = object : DbConfigs {
             override val db: String = Props.testDb
@@ -15,4 +24,11 @@ object DbSetup  {
         }
         configs.connect()
     }
+}
+
+fun <T> testTransaction(statement: Transaction.() -> T): T = transaction {
+    stdlog()
+    drop(TestUsers, TestGroups, TestUserGroups)
+    create(TestUsers, TestGroups, TestUserGroups)
+    statement()
 }

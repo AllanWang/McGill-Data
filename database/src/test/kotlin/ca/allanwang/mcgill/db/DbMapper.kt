@@ -4,15 +4,15 @@ import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.readMap
 import ca.allanwang.mcgill.db.bindings.stdlog
 import ca.allanwang.mcgill.db.internal.DbSetup
-import ca.allanwang.mcgill.db.tables.TestGroups
-import ca.allanwang.mcgill.db.tables.TestUserGroups
-import ca.allanwang.mcgill.db.tables.TestUsers
+import ca.allanwang.mcgill.db.internal.testTransaction
+import ca.allanwang.mcgill.db.tables.*
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.BeforeClass
 import org.junit.Test
 
 class DbMapper {
+
     companion object : WithLogging() {
         @BeforeClass
         @JvmStatic
@@ -21,8 +21,10 @@ class DbMapper {
 
     @Test
     fun readMap() {
-        val result = transaction {
-            stdlog()
+        val result = testTransaction {
+
+            (10..20).map(::testUser).forEach(TestUser::save)
+
             (TestUsers innerJoin TestUserGroups innerJoin TestGroups)
                     .slice(TestUsers.columns + TestGroups.columns)
                     .selectAll()
