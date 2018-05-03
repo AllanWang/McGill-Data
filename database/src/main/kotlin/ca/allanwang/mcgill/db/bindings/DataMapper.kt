@@ -30,31 +30,17 @@ interface DataReceiver<in T : Any> {
 
 interface OneToManyReceiver<in T : Any, V : Any> {
 
+    /**
+     * Given data, assign variables to table columns
+     */
     fun toTable(u: UpdateBuilder<*>, one: T, many: V)
 
+    /**
+     * Given main data, return child associates
+     */
     fun getMany(one: T): List<V>
 
 }
-
-/*
- * -----------------------------------------------------
- * Query Extensions
- * -----------------------------------------------------
- */
-
-/**
- * Allow any query to apply a mapping function
- * No safety checks are made to ensure that the mapping is actually possible
- */
-fun <T : Any> Query.mapWith(mapper: (row: ResultRow) -> T): List<T> =
-        map { mapper(it) }
-
-/**
- * Check if element exists in iterator,
- * and map the first one only if it exists
- */
-fun <T : Any> Query.mapSingle(mapper: (row: ResultRow) -> T): T? =
-        iterator().run { if (hasNext()) mapper(next()) else null }
 
 /*
  * -----------------------------------------------------
@@ -92,14 +78,3 @@ fun <T : Any, M> M.delete(data: T) where M : DataReceiver<T>, M : Table {
     deleteWhere { mapper(data) }
 }
 
-/**
- * Replicate an existing table column
- * If an index is supplied, the value will be cascaded
- */
-fun <C> Table.referenceCol(ref: Column<C>, index: Int = -1): Column<C> =
-        registerColumn<C>(ref.name, ref.columnType).run {
-            if (index >= 0)
-                primaryKey(index).references(ref, ReferenceOption.CASCADE)
-            else
-                references(ref)
-        }

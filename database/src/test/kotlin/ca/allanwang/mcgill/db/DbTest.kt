@@ -1,6 +1,7 @@
 package ca.allanwang.mcgill.db
 
 import ca.allanwang.kit.logger.WithLogging
+import ca.allanwang.mcgill.db.tables.*
 import ca.allanwang.mcgill.test.Props
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils.create
@@ -33,7 +34,7 @@ class DbTest {
         transaction {
 
             logger.addLogger(StdOutSqlLogger)
-//            drop(Users, Courses, UserCourses, Groups, UserGroups)
+            drop(Users, Courses, UserCourses, Groups, UserGroups)
 
             create(Users, Courses, UserCourses, Groups, UserGroups)
 

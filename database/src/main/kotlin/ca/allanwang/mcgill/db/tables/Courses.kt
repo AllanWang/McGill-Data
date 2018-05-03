@@ -1,4 +1,4 @@
-package ca.allanwang.mcgill.db
+package ca.allanwang.mcgill.db.tables
 
 import ca.allanwang.mcgill.db.bindings.DataReceiver
 import ca.allanwang.mcgill.db.bindings.OneToManyReceiver
@@ -57,8 +57,4 @@ object UserCourses : Table(), OneToManyReceiver<User, Course> {
     }
 
     override fun getMany(one: User): List<Course> = one.courses
-
-    fun delete(user: User) {
-        deleteWhere { UserCourses.shortUser eq user.shortUser }
-    }
 }

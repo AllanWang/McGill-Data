@@ -1,8 +1,7 @@
-package ca.allanwang.mcgill.db
+package ca.allanwang.mcgill.db.tables
 
 import ca.allanwang.mcgill.db.bindings.*
 import ca.allanwang.mcgill.models.data.User
-import ca.allanwang.mcgill.models.data.UserQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
@@ -41,10 +40,10 @@ object Users : Table(), DataReceiver<User> {
 
     //todo move to graphql
     private fun SqlExpressionBuilder.samMatcher(sam: String): Op<Boolean> =
-            (Users.longUser eq sam) or (Users.shortUser eq sam) or (Users.id eq sam)
+            (longUser eq sam) or (shortUser eq sam) or (id eq sam)
 
     override fun SqlExpressionBuilder.mapper(data: User): Op<Boolean> =
-            id eq data.id
+            shortUser eq data.shortUser
 }
 
 
@@ -60,7 +59,5 @@ fun User.save() {
 }
 
 fun User.delete() {
-    UserCourses.delete(this)
-    UserGroups.delete(this)
     Users.delete(this)
 }
