@@ -28,7 +28,7 @@ fun <T : Any> Query.mapSingle(mapper: (row: ResultRow) -> T): T? =
  * If an index is supplied, the value will be cascaded
  */
 fun <C> Table.referenceCol(ref: Column<C>, index: Int = -1): Column<C> =
-        registerColumn<C>(ref.name, ref.columnType).run {
+        registerColumn<C>("${ref.table.tableName.toUnderscore()}_${ref.name}", ref.columnType).run {
             if (index >= 0)
                 primaryKey(index).references(ref, ReferenceOption.CASCADE)
             else

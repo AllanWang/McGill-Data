@@ -42,6 +42,20 @@ interface OneToManyReceiver<in T : Any, V : Any> {
 
 }
 
+/**
+ * Allows any data model to map its content to table columns
+ */
+interface ColMapper {
+    fun colMap(): Map<Column<*>, Any?>
+}
+
+fun ColMapper.matches(map:Map<String, Any?>): Boolean {
+    val colMap = colMap()
+    if (colMap.size != map.size)
+        return false
+    return colMap.all { (k, v) -> v == map[k.name] }
+}
+
 /*
  * -----------------------------------------------------
  * DataReceiver Extensions
@@ -59,6 +73,12 @@ fun <T : Any, M> M.save(data: List<T>) where M : DataReceiver<T>, M : Table {
     batchInsertOnDuplicateKeyUpdate(data, uniqueUpdateColumns) { toTable(this, it) }
 }
 
+/**
+ * To save a one to many data set,
+ * the child items are first created, followed by the one to many rows
+ * How the children are saved are at the discretion of their table,
+ * but by default, updated content will overwrite the data
+ */
 fun <T : Any, V : Any, M, C> M.save(data: T, childTable: C)
         where M : OneToManyReceiver<T, V>, M : Table,
               C : DataReceiver<V>, C : Table {
