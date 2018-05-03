@@ -46,3 +46,5 @@ fun Table.getMap(columns: Collection<Column<*>> = this.columns,
         }.map { row ->
             columns.map { it.name to row[it] }.toMap()
         }
+
+fun Transaction.stdlog() = logger.addLogger(StdOutSqlLogger)

@@ -17,6 +17,6 @@ fun String.toCamel(): String = regexUnderscoreToCamel.replace(toLowerCase()) {
  * Converts camel to underscore:
  * helloWorld -> hello_world
  */
-fun String.toUnderscore(): String = regexCamelToUnderscore.replace(this) {
+fun String.toUnderscore(): String = regexCamelToUnderscore.replace(this.decapitalize()) {
     "_" + it.groupValues[0].toLowerCase()
 }

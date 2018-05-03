@@ -4,14 +4,12 @@ import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.DbConfigs
 import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.db.bindings.getMap
+import ca.allanwang.mcgill.db.bindings.stdlog
 import ca.allanwang.mcgill.db.tables.*
 import ca.allanwang.mcgill.test.Props
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.BeforeClass
 import org.junit.Test
@@ -48,11 +46,27 @@ class DbTest {
     }
 
     @Test
+    fun testRead() {
+        transaction {
+
+            stdlog()
+            (TestUsers.innerJoin(TestUserGroups, { id }, { userId })
+                    .innerJoin(TestGroups, { TestUserGroups.groupName }, { name }))
+//                    .slice(TestUsers.columns + TestGroups.columns)
+//                    .select {
+//                        (TestUsers.id eq TestUserGroups.userId) and (TestGroups.name eq TestUserGroups.groupName)
+//                    }
+                    .selectAll()
+                    .forEach { println(it) }
+        }
+    }
+
+    @Test
     fun test() {
 
         transaction {
 
-            logger.addLogger(StdOutSqlLogger)
+            stdlog()
 
             // start with a clean slate
             drop(TestUsers, TestGroups, TestUserGroups)
