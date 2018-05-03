@@ -1,6 +1,8 @@
 package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
+import ca.allanwang.mcgill.db.bindings.DbConfigs
+import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.graphql.Props
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLOutputType
@@ -25,11 +27,7 @@ object KGraphDb : WithLogging() {
         registration.clear()
         if (configs.db.isEmpty())
             throw RuntimeException("No db found; check config location")
-        log.info("Connecting to ${configs.db} with ${configs.dbUser}")
-        Database.connect(url = configs.db,
-                user = configs.dbUser,
-                password = configs.dbPassword,
-                driver = configs.dbDriver)
+        configs.connect()
     }
 
     fun destroy() {
@@ -37,9 +35,3 @@ object KGraphDb : WithLogging() {
     }
 }
 
-interface DbConfigs {
-    val db: String
-    val dbUser: String
-    val dbPassword: String
-    val dbDriver: String
-}
