@@ -9,16 +9,21 @@ object PostgresStatements {
 
     fun ignore(statement: String) = "$statement $ON_CONFLICT_IGNORE"
 
-    fun onConflictUpdate(columns: List<Column<*>>, transaction: Transaction): String {
-        if (columns.isEmpty())
+    fun onConflictUpdate(conflictColumns: List<Column<*>>,
+                         updateColumns: List<Column<*>>,
+                         transaction: Transaction): String {
+        if (conflictColumns.isEmpty())
             return ""
-        val ids = columns.map { transaction.identity(it) }
-        val fullId = ids.joinToString()
-        val updater = ids.joinToString(postfix = ";") { "$it=EXCLUDED.$it" }
+        val fullId = conflictColumns.joinToString { transaction.identity(it) }
+        val updater = updateColumns.map { transaction.identity(it) }
+                .joinToString(postfix = ";") { "$it=EXCLUDED.$it" }
         return "ON CONFLICT ($fullId) DO UPDATE SET $updater"
     }
 
-    fun update(statement: String, columns: List<Column<*>>, transaction: Transaction): String =
-            "$statement ${onConflictUpdate(columns, transaction)}"
+    fun update(statement: String,
+               conflictColumns: List<Column<*>>,
+               updateColumns: List<Column<*>>,
+               transaction: Transaction): String =
+            "$statement ${onConflictUpdate(conflictColumns, updateColumns, transaction)}"
 
 }

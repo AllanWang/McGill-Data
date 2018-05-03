@@ -39,5 +39,10 @@ fun <C> Table.referenceCol(ref: Column<C>, index: Int = -1): Column<C> =
  * Given expression, convert rows to map
  */
 fun Table.getMap(columns: Collection<Column<*>> = this.columns,
-                 where: SqlExpressionBuilder.() -> Op<Boolean>): List<Map<String, Any?>> =
-    select(where).map { row -> columns.map { it.name to row[it] }.toMap() }
+                 limit: Int = -1,
+                 where: (SqlExpressionBuilder.() -> Op<Boolean>)? = null): List<Map<String, Any?>> =
+        (if (where != null) select(where) else selectAll()).apply {
+            if (limit > 0) limit(limit)
+        }.map { row ->
+            columns.map { it.name to row[it] }.toMap()
+        }

@@ -10,7 +10,10 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 class BatchInsertUpdateOnDuplicate(table: Table,
                                    private val onDupUpdate: List<Column<*>>) : BatchInsertStatement(table, false) {
     override fun prepareSQL(transaction: Transaction): String =
-            PostgresStatements.update(super.prepareSQL(transaction), onDupUpdate, transaction)
+            PostgresStatements.update(super.prepareSQL(transaction),
+                    onDupUpdate,
+                    table.columns,
+                    transaction)
 }
 
 fun <T : Table, E> T.batchInsertOnDuplicateKeyUpdate(data: List<E>, onDupUpdateColumns: List<Column<*>>, body: BatchInsertUpdateOnDuplicate.(E) -> Unit): List<Int> {

@@ -16,5 +16,8 @@ class InsertOrUpdate<Key : Any>(private val onDupUpdate: List<Column<*>>,
                                 table: Table,
                                 isIgnore: Boolean = false) : InsertStatement<Key>(table, isIgnore) {
     override fun prepareSQL(transaction: Transaction): String =
-            PostgresStatements.update(super.prepareSQL(transaction), onDupUpdate, transaction)
+            PostgresStatements.update(super.prepareSQL(transaction),
+                    onDupUpdate,
+                    table.columns,
+                    transaction)
 }
