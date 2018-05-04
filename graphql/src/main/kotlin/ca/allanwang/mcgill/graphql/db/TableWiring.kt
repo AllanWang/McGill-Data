@@ -1,7 +1,8 @@
 package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.Users
+import ca.allanwang.mcgill.db.bindings.toCamel
+import ca.allanwang.mcgill.db.tables.Users
 import ca.allanwang.mcgill.graphql.kotlin.graphQLArgument
 import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
 import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
@@ -141,9 +142,6 @@ abstract class TableWiring(private val table: Table,
 
 
     companion object {
-
-        fun String.toCamel(): String = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, this)
-        fun String.toUnderscore(): String = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this)
 
         fun argDefinitions(vararg column: Column<*>) = column.map(this::argDefinition)
 

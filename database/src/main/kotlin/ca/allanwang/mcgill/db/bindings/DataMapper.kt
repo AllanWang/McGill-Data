@@ -1,120 +1,121 @@
 package ca.allanwang.mcgill.db.bindings
 
-import ca.allanwang.mcgill.db.statements.insertOrUpdate
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.statements.UpdateBuilder
+import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Query
+import org.jetbrains.exposed.sql.ResultRow
 
-/**
- * Table that can receive and handle data
- */
-interface DataReceiver<in T : Any> {
-    /**
-     * Given data, assign variables to table columns
-     */
-    fun toTable(u: UpdateBuilder<*>, d: T)
-
-    /**
-     * Given data, return db query statement to find that data if it exists
-     * Mapping expression should be one to one
-     */
-    fun SqlExpressionBuilder.mapper(data: T): Op<Boolean>
+fun Query.readMap(mapper: SQLMapLevelGenerator.() -> Unit): Map<String, Any?> {
+    val m = generateMapper(mapper)
+    val data = mutableMapOf<String, Any?>()
+    forEach { m.generate(data, it) }
+    return data
 }
 
-/**
- * Unified data db mapping
- */
-interface DataMapper<T : Any> : DataReceiver<T> {
-    /**
-     * Given a result row, map to the data
-     */
-    fun toData(row: ResultRow): T
-
+fun generateMapper(mapper: SQLMapLevelGenerator.() -> Unit): SQLMapLevelGenerator {
+    val generator = SQLMapLevelGenerator()
+    generator.mapper()
+    return generator
 }
 
-/*
- * -----------------------------------------------------
- * Query Extensions
- * -----------------------------------------------------
- */
+enum class SQLMapType {
+    FIRST, LAST, LIST
+}
 
-/**
- * Allow any query to apply a mapping function
- * No safety checks are made to ensure that the mapping is actually possible
- */
-fun <T : Any> Query.mapWith(mapper: (row: ResultRow) -> T): List<T> =
-        map { mapper(it) }
+class SQLAttributeException(msg: String) : RuntimeException(msg)
 
-/**
- * Check if element exists in iterator,
- * and map the first one only if it exists
- */
-fun <T : Any> Query.mapSingle(mapper: (row: ResultRow) -> T): T? =
-        iterator().run { if (hasNext()) mapper(next()) else null }
+open class SQLMapLevelGenerator(var formatter: (key: String) -> String = String::toCamel) {
+    private val keySet: MutableSet<String> = mutableSetOf()
+    private val attrs: MutableSet<SQLAttribute> = mutableSetOf()
 
-/*
- * -----------------------------------------------------
- * DataReceiver Extensions
- * -----------------------------------------------------
- */
+    private fun validate(name: String?, column: Column<*>? = null): String {
+        val key = name ?: formatter(column?.name
+                ?: throw SQLAttributeException("No name or column supplied"))
+        if (!keySet.add(key))
+            throw SQLAttributeException("Attr $key already contained in this level: $keySet")
+        return key
+    }
 
-/**
- * Queries for a match in the db, and either updates the existing data or inserts a new one
- * Note that this only affects the table implementing the receiver!
- * This may not fully save all the data in [data]
- *
- * Create in extension function directly from [data] to update the required queries
- * to save to completion.
- */
-fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
-    if (select({ mapper(data) }).empty())
-        insert { toTable(it, data) }
-    else
-        update({ mapper(data) }) {
-            toTable(it, data)
+    private fun generate(generator: SQLMapLevelGenerator.() -> Unit): SQLMapLevelGenerator =
+            SQLMapLevelGenerator(formatter).apply(generator)
+
+    fun attr(column: Column<*>,
+             name: String? = null,
+             type: SQLMapType = SQLMapType.FIRST) {
+        val key = validate(name, column)
+        val attr = SQLColAttribute(column, key, type)
+        attrs.add(attr)
+    }
+
+    fun attrs(columns: List<Column<*>>, type: SQLMapType = SQLMapType.FIRST) {
+        columns.forEach {
+            attr(it, type = type)
         }
+    }
+
+    fun first(column: Column<*>, name: String? = null) =
+            attr(column, name, SQLMapType.FIRST)
+
+    fun last(column: Column<*>, name: String? = null) =
+            attr(column, name, SQLMapType.LAST)
+
+    fun list(column: Column<*>, name: String? = null) =
+            attr(column, name, SQLMapType.LIST)
+
+    fun attr(name: String, type: SQLMapType, children: SQLMapLevelGenerator.() -> Unit) {
+        val key = validate(name)
+        val childGenerator = SQLMapLevelGenerator(formatter)
+        childGenerator.children()
+        val attr = SQLMapAttribute(key, type, childGenerator.attrs)
+        attrs.add(attr)
+    }
+
+    fun first(name: String, children: SQLMapLevelGenerator.() -> Unit) =
+            attr(name, SQLMapType.FIRST, children)
+
+    fun last(name: String, children: SQLMapLevelGenerator.() -> Unit) =
+            attr(name, SQLMapType.LAST, children)
+
+    fun list(name: String, children: SQLMapLevelGenerator.() -> Unit) =
+            attr(name, SQLMapType.LIST, children)
+
+    fun generate(data: MutableMap<String, Any?>, row: ResultRow) {
+        attrs.forEach {
+            it.toMap(data, row)
+        }
+    }
+
 }
 
-fun <T : Any, M> M.save(key: Column<*>, data: T) where M : DataReceiver<T>, M : Table {
-    insertOrUpdate(key) { toTable(it, data) }
+interface SQLAttribute {
+    val name: String
+    val type: SQLMapType
+    fun getData(row: ResultRow): Any?
+    fun toMap(map: MutableMap<String, Any?>, row: ResultRow) {
+        when (type) {
+            SQLMapType.FIRST -> map.computeIfAbsent(name) { getData(row) }
+            SQLMapType.LAST -> map[name] = getData(row)
+            SQLMapType.LIST -> {
+                val list = map[name] as? MutableList<Any?> ?: mutableListOf()
+                list.add(getData(row))
+                map[name] = list
+            }
+
+        }
+    }
 }
 
-fun <T : Any, M> M.save(data: Collection<T>) where M : DataReceiver<T>, M : Table {
-//    if (data.isNotEmpty())
-//        batchInsert(data, true) { toTable(this, it) }
-    data.forEach { save(it) } // todo improve
+class SQLColAttribute(val column: Column<*>,
+                      override val name: String,
+                      override val type: SQLMapType) : SQLAttribute {
+    override fun getData(row: ResultRow): Any? = row[column]
 }
 
-fun <T : Any, M> M.save(key: Column<*>, data: Collection<T>) where M : DataReceiver<T>, M : Table {
-//    if (data.isNotEmpty())
-//        batchInsert(data) { toTable(this, it) }
-    data.forEach { save(key, it) } // todo improve
+class SQLMapAttribute(override val name: String,
+                      override val type: SQLMapType,
+                      val children: Collection<SQLAttribute>) : SQLAttribute {
+    override fun getData(row: ResultRow): Any? {
+        val data = mutableMapOf<String, Any?>()
+        children.forEach { it.toMap(data, row) }
+        return data
+    }
 }
-
-/**
- * Queries for data in db and deletes it
- * Note that this only affects the table implementing the receiver!
- * This may not fully delete all the data in [data]
- *
- * Create in extension function directly from [data] to update the required queries
- * to delete to completion.
- */
-fun <T : Any, M> M.delete(data: T) where M : DataReceiver<T>, M : Table {
-    deleteWhere { mapper(data) }
-}
-
-/*
- * -----------------------------------------------------
- * DataMapper Extensions
- * -----------------------------------------------------
- */
-
-/**
- * Queries for one data model
- */
-fun <T : Any, M> M.selectData(where: SqlExpressionBuilder.() -> Op<Boolean>): T?
-        where M : DataMapper<T>, M : FieldSet =
-        select(where).limit(1, 0).mapSingle(this::toData)
-
-fun <T : Any, M> M.selectDataCollection(where: SqlExpressionBuilder.() -> Op<Boolean>): List<T>
-        where M : DataMapper<T>, M : FieldSet =
-        select(where).map(this::toData)

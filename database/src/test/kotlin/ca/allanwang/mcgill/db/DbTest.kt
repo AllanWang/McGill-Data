@@ -1,11 +1,16 @@
 package ca.allanwang.mcgill.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.test.Props
-import org.jetbrains.exposed.sql.Database
+import ca.allanwang.mcgill.db.bindings.getMap
+import ca.allanwang.mcgill.db.bindings.stdlog
+import ca.allanwang.mcgill.db.bindings.toMap
+import ca.allanwang.mcgill.db.internal.DbSetup
+import ca.allanwang.mcgill.db.internal.testTransaction
+import ca.allanwang.mcgill.db.tables.*
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
-import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.BeforeClass
@@ -15,49 +20,70 @@ import kotlin.test.assertEquals
 class DbTest {
 
     companion object : WithLogging() {
-
         @BeforeClass
         @JvmStatic
-        fun before() {
-            log.info("Connecting to ${Props.testDb} with ${Props.testDbUser}")
-            Database.connect(url = Props.testDb,
-                    user = Props.testDbUser,
-                    password = Props.testDbPassword,
-                    driver = Props.testDriver)
+        fun before() = DbSetup.connect()
+    }
+
+    private fun Table.assertCount(count: Int, message: String? = null) =
+            assertEquals(count, selectAll().count(),
+                    message ?: "$tableName count mismatch\n\n${getMap(limit = 20)}")
+
+    /**
+     * Assert that all related tables have the appropriate counts
+     */
+    private fun assertUserCount(userCount: Int) {
+        TestUsers.assertCount(userCount)
+        TestGroups.assertCount(if (userCount == 0) 0 else userCount + 1) // one shared group
+        TestUserGroups.assertCount(userCount * 2)
+    }
+
+
+    @Test
+    fun batchInsert() {
+        testTransaction {
+            testUser(19).save()
         }
     }
 
     @Test
     fun test() {
 
-        transaction {
+        testTransaction {
 
-            logger.addLogger(StdOutSqlLogger)
-//            drop(Users, Courses, UserCourses, Groups, UserGroups)
-
-            create(Users, Courses, UserCourses, Groups, UserGroups)
+            assertUserCount(0)
 
             val test1 = testUser(1)
 
-            test1.delete() // clean slate
-
-            val oldCount = Users.selectAll().count()
-
+            // first save
             test1.save()
 
-            assertEquals(oldCount + 1, Users.selectAll().count())
-            test1.testMatches(1)
+            assertUserCount(1)
+            test1.assertMatch()
 
-            val test2 = test1.copy(middleName = "Hello")
-            test2.save()
+            test1.name = test1.name + "$2"
 
-            assertEquals(oldCount + 1, Users.selectAll().count())
+            // updating attribute; table size should not change
+            test1.save()
+            assertUserCount(1)
+            test1.assertMatch()
 
-            test2.testMatches(1)
+            val test2 = testUser(2)
 
+            // no change should occur
             test2.delete()
-            assertEquals(oldCount, Users.selectAll().count())
+            assertUserCount(1)
 
+            // saving new user
+            test2.save()
+            assertUserCount(2)
+            test2.assertMatch()
+
+            // deleting valid user
+            test1.delete()
+            TestUsers.assertCount(1)        // only user2 remains
+            TestGroups.assertCount(3)       // user1's group still exists
+            TestUserGroups.assertCount(2)   // only mappings for user2
         }
     }
 }
