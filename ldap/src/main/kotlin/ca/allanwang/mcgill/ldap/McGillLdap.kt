@@ -8,7 +8,9 @@ import ca.allanwang.mcgill.models.data.User
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.naming.Context
 import javax.naming.Context.*
+import javax.naming.NamingEnumeration
 import javax.naming.NamingException
 import javax.naming.directory.Attribute
 import javax.naming.directory.Attributes
@@ -23,8 +25,9 @@ interface McGillLdapContract {
      * Resulting user is nonnull if it exists
      *
      * Note that [auth] may use different credentials than the [username] in question.
-     * However, if a different auth is provided (eg from our science account),
-     * the studentId cannot be queried
+     * The auth username also <b>must</b> be the short user
+     * Additionally, if the auth user differs from the one that is queried,
+     * the studentId will not be returned
      *
      * You must be on the mcgill network for this to work
      * On linux, you may download openconnect and run
@@ -41,9 +44,19 @@ interface McGillLdapContract {
 
 object McGillLdap : McGillLdapContract, WithLogging() {
 
+    val shortUserRegex = Regex("[a-zA-Z]+[0-9]*")
+    val studentIdRegex = Regex("[0-9]+")
 
     override fun queryUser(username: String?, auth: Pair<String, String>): User? {
         if (username == null) return null
+        if (username.matches(studentIdRegex)) {
+            log.error("Cannot query by student id $username")
+            return null
+        }
+        if (!auth.first.matches(shortUserRegex)) {
+            log.error("Queried user auth ${auth.first} is not a short user")
+            return null
+        }
         val ctx = bindLdap(auth) ?: return null
         val searchName = if (username.contains(".")) "userPrincipalName=$username@mail.mcgill.ca"
         else "sAMAccountName=$username"
@@ -58,33 +71,54 @@ object McGillLdap : McGillLdapContract, WithLogging() {
         return user
     }
 
-    override fun autoSuggest(like: String, auth: Pair<String, String>, limit: Int): List<User> {
+    /**
+     * Wrapper to allow proper closing block
+     */
+    private inline fun <T : Any, R> T.use(block: (T) -> R, finally: (T) -> Unit): R {
+        var exception: Throwable? = null
         try {
-            val ctx = bindLdap(auth) ?: return emptyList()
-            val searchFilter = "(&(objectClass=user)(|(userPrincipalName=$like*)(samaccountname=$like*)))"
-            val searchControls = SearchControls()
-            searchControls.searchScope = SearchControls.SUBTREE_SCOPE
-            val results = ctx.search(LDAP_BASE, searchFilter, searchControls)
-            val out = mutableListOf<User>()
-            var res = 0
-            val iter = results.iterator()
-            while (iter.hasNext() && res++ < limit) {
-                val user = iter.next().attributes.toUser(ctx)
-                if (user.longUser.split("@").getOrNull(0)?.indexOf(".") ?: -1 > 0)
-                    out.add(user)
+            return block(this)
+        } catch (e: Exception) {
+            exception = e
+            throw e
+        } finally {
+            if (exception == null) finally(this)
+            else try {
+                finally(this)
+            } catch (closeException: Throwable) {
+                exception.addSuppressed(closeException)
             }
-            //todo update; a crash here will lead to the contents not closing
-            results.close()
-            ctx.close()
-            return out
-        } catch (ne: NamingException) {
-            log.error("Could not get autosuggest", ne)
-            return emptyList()
         }
     }
 
+    private inline fun <T : Context, R> T.use(block: (T) -> R): R =
+            use(block) { it.close() }
+
+    private inline fun <T : Any, N : NamingEnumeration<T>, R> N.use(block: (N) -> R) =
+            use(block) { it.close() }
+
+    override fun autoSuggest(like: String, auth: Pair<String, String>, limit: Int): List<User> =
+            bindLdap(auth)?.use { ctx ->
+                val searchFilter = "(&(objectClass=user)(|(userPrincipalName=$like*)(samaccountname=$like*)))"
+                val searchControls = SearchControls()
+                searchControls.searchScope = SearchControls.SUBTREE_SCOPE
+                ctx.search(LDAP_BASE, searchFilter, searchControls).use { results ->
+                    val out = mutableListOf<User>()
+                    var res = 0
+                    val iter = results.iterator()
+                    while (iter.hasNext() && res++ < limit) {
+                        val user = iter.next().attributes.toUser(ctx)
+                        if (user.longUser.split("@")
+                                        .getOrNull(0)?.indexOf(".") ?: -1 > 0)
+                            out.add(user)
+                    }
+                    out
+                }
+            } ?: emptyList()
+
     /**
      * Defines the environment necessary for [InitialLdapContext]
+     * [user] must be a short user for the map to be valid
      */
     private fun createAuthMap(user: String, password: String) = Hashtable<String, String>().apply {
         put(SECURITY_AUTHENTICATION, "simple")
@@ -100,16 +134,15 @@ object McGillLdap : McGillLdapContract, WithLogging() {
 
     /**
      * Create [LdapContext] for given credentials
+     * [user] must be a short user
      */
-    private fun bindLdap(user: String, password: String): LdapContext? {
-        try {
-            val auth = createAuthMap(user, password)
-            return InitialLdapContext(auth, null)
-        } catch (e: Exception) {
-            log.error("Failed to bind to LDAP for $user", e)
-            return null
-        }
-    }
+    private fun bindLdap(user: String, password: String): LdapContext? = try {
+                val auth = createAuthMap(user, password)
+                InitialLdapContext(auth, null)
+            } catch (e: Exception) {
+                log.error("Failed to bind to LDAP for $user", e)
+                null
+            }
 
     /**
      * Make sure that the regex matches values located in [Semester]
