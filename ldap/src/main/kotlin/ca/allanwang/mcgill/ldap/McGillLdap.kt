@@ -137,12 +137,12 @@ object McGillLdap : McGillLdapContract, WithLogging() {
      * [user] must be a short user
      */
     private fun bindLdap(user: String, password: String): LdapContext? = try {
-                val auth = createAuthMap(user, password)
-                InitialLdapContext(auth, null)
-            } catch (e: Exception) {
-                log.error("Failed to bind to LDAP for $user", e)
-                null
-            }
+        val auth = createAuthMap(user, password)
+        InitialLdapContext(auth, null)
+    } catch (e: Exception) {
+        log.error("Failed to bind to LDAP for $user", e)
+        null
+    }
 
     /**
      * Make sure that the regex matches values located in [Semester]
@@ -217,7 +217,11 @@ object McGillLdap : McGillLdapContract, WithLogging() {
         members?.forEach { (name, semester) ->
             if (name == null) return@forEach
             if (semester == null) groups.add(name)
-            else courses.add(Course(name, season = semester.season, year = semester.year))
+            else {
+                val crn = name.substringBefore(":").trim()
+                val desc = name.substringAfter(":").trim()
+                courses.add(Course(crn, desc, season = semester.season, year = semester.year))
+            }
         }
 
         out.groups = groups

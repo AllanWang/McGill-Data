@@ -3,6 +3,10 @@ package ca.allanwang.mcgill.models.data
 import ca.allanwang.mcgill.models.bindings.McGillModel
 import java.util.*
 
+/**
+ * Model for a group with a semester attached
+ * [courseName] typically follows the format NAME-NUMBER-SECTION; eg COMP-202-001
+ */
 data class Course(val courseName: String,
                   val description: String? = null,
                   val teacher: String? = null,
