@@ -15,7 +15,7 @@ fun DbConfigs.connect() {
     val log = LogManager.getLogger("DbConfigs")
     log.info("Connecting to $db with $dbUser")
     Database.connect(url = db,
+            driver = dbDriver,
             user = dbUser,
-            password = dbPassword,
-            driver = dbDriver)
+            password = dbPassword)
 }

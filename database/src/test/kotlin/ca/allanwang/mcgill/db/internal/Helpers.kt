@@ -11,6 +11,7 @@ import ca.allanwang.mcgill.test.Props
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
+import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -26,9 +27,10 @@ object DbSetup {
     }
 }
 
-fun <T> testTransaction(statement: Transaction.() -> T): T = transaction {
+fun <T> testTransaction(vararg tables: Table = arrayOf(TestUsers, TestGroups, TestUserGroups),
+                        statement: Transaction.() -> T): T = transaction {
     stdlog()
-    drop(TestUsers, TestGroups, TestUserGroups)
-    create(TestUsers, TestGroups, TestUserGroups)
+    drop(*tables)
+    create(*tables)
     statement()
 }
