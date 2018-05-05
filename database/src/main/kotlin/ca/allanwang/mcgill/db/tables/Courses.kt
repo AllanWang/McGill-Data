@@ -19,10 +19,10 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
  * Course detail per semester
  */
 object Courses : Table(), DataReceiver<Course> {
-    val courseName = varchar("course_name", 19).primaryKey()
-    val description = varchar("course_description", 200).nullable()
-    val teacher = varchar("teacher", 50).nullable()
-    val season = enumerationByName("season", 10, Season::class.java)
+    val courseName = varchar("course_name", 32).primaryKey()
+    val description = varchar("course_description", 256).nullable()
+    val teacher = varchar("teacher", 32).nullable()
+    val season = enumerationByName("season", 16, Season::class.java)
     val year = integer("year")
 
     override fun toTable(u: UpdateBuilder<*>, d: Course) {

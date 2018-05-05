@@ -6,7 +6,6 @@ import ca.allanwang.mcgill.db.tables.Users
 import ca.allanwang.mcgill.graphql.kotlin.graphQLArgument
 import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
 import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
-import com.google.common.base.CaseFormat
 import graphql.Scalars
 import graphql.language.Field
 import graphql.schema.*

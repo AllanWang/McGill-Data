@@ -1,4 +1,4 @@
 include 'database', 'ldap', 'models', 'test'
 
 if (!System.env.JITPACK)
-    include 'graphql'
+    include 'graphql', 'migration'
