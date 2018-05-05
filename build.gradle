@@ -42,6 +42,9 @@ subprojects {
     apply plugin: 'kotlin'
     apply plugin: 'maven'
 
+    group "ca.allanwang.mcgill"
+    version VERSION
+
     repositories {
         maven { url "https://dl.bintray.com/kotlin/exposed" }
         maven { url "https://jitpack.io" }
