@@ -13,10 +13,10 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
 object Users : Table(), DataReceiver<User> {
     val shortUser = varchar("short_user", 20).primaryKey()
     val id = varchar("id", 20).uniqueIndex()
-    val longUser = varchar("long_user", 30).uniqueIndex()
+    val longUser = varchar("long_user", 50).uniqueIndex()
     val activeSince = long("active_since")
-    val displayName = varchar("display_name", 30)
-    val email = varchar("email", 30)
+    val displayName = varchar("display_name", 50)
+    val email = varchar("email", 50)
     val faculty = varchar("faculty", 40).nullable()
     val givenName = varchar("given_name", 20)
     val lastName = varchar("last_name", 20)

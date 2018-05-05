@@ -13,7 +13,7 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
  * -----------------------------------------
  */
 object Groups : Table(), DataReceiver<String> {
-    val groupName = varchar("group_name", 30).primaryKey()
+    val groupName = varchar("group_name", 60).primaryKey()
 
     override fun toTable(u: UpdateBuilder<*>, d: String) {
         u[groupName] = d
