@@ -2,17 +2,11 @@ package ca.allanwang.mcgill.db
 
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.getMap
-import ca.allanwang.mcgill.db.bindings.stdlog
-import ca.allanwang.mcgill.db.bindings.toMap
 import ca.allanwang.mcgill.db.internal.DbSetup
 import ca.allanwang.mcgill.db.internal.testTransaction
 import ca.allanwang.mcgill.db.tables.*
-import org.jetbrains.exposed.sql.SchemaUtils.create
-import org.jetbrains.exposed.sql.SchemaUtils.drop
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.BeforeClass
 import org.junit.Test
 import kotlin.test.assertEquals

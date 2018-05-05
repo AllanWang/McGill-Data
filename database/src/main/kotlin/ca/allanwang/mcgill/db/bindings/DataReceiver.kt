@@ -1,6 +1,5 @@
 package ca.allanwang.mcgill.db.bindings
 
-import ca.allanwang.mcgill.db.insertOrUpdate
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
@@ -68,10 +67,10 @@ fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
 //    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
 }
 
-fun <T : Any, M> M.save(c: List<Column<*>>, data: T) where M : DataReceiver<T>, M : Table {
-    insertOrUpdate(c) { toTable(it, data) }
-//    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
-}
+//fun <T : Any, M> M.save(c: List<Column<*>>, data: T) where M : DataReceiver<T>, M : Table {
+//    insertOrUpdate(c) { toTable(it, data) }
+////    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
+//}
 
 fun <T : Any, M> M.save(data: List<T>) where M : DataReceiver<T>, M : Table {
     data.forEach { save(it) }
