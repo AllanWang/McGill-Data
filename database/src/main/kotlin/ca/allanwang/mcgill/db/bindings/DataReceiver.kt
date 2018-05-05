@@ -67,6 +67,11 @@ fun <T : Any, M> M.save(data: T) where M : DataReceiver<T>, M : Table {
 //    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
 }
 
+//fun <T : Any, M> M.save(c: List<Column<*>>, data: T) where M : DataReceiver<T>, M : Table {
+//    insertOrUpdate(c) { toTable(it, data) }
+////    insertOrUpdate(uniqueUpdateColumns) { toTable(it, data) }
+//}
+
 fun <T : Any, M> M.save(data: List<T>) where M : DataReceiver<T>, M : Table {
     data.forEach { save(it) }
 //    batchInsertOnDuplicateKeyUpdate(data, uniqueUpdateColumns) { toTable(this, it) }
@@ -81,8 +86,10 @@ fun <T : Any, M> M.save(data: List<T>) where M : DataReceiver<T>, M : Table {
 fun <T : Any, V : Any, M, C> M.save(data: T, childTable: C)
         where M : OneToManyReceiver<T, V>, M : Table,
               C : DataReceiver<V>, C : Table {
-    childTable.save(getMany(data))
-    batchInsert(getMany(data), true) { toTable(this, data, it) }
+    val children = getMany(data)
+    if (children.isEmpty()) return
+    childTable.save(children)
+    batchInsert(children, true) { toTable(this, data, it) }
 //    batchInsertOrIgnore(getMany(data)) { toTable(this, data, it) }
 }
 

@@ -6,7 +6,6 @@ import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.graphql.Props
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLOutputType
-import org.jetbrains.exposed.sql.Database
 
 object KGraphDb : WithLogging() {
     private val registration: MutableMap<TableWiring, GraphQLOutputType> = mutableMapOf()
