@@ -10,8 +10,6 @@ dependencies {
 //    compile('org.springframework.boot:spring-boot-starter-security')
     compile('org.springframework.boot:spring-boot-starter-web')
 
-//    compile "com.github.pgutkowski:kgraphql:$KGRAPHQL"
-
     compile "com.graphql-java:graphql-spring-boot-starter:4.0.0"
     compile "com.graphql-java:graphiql-spring-boot-starter:4.0.0"
 //    compile 'com.graphql-java:graphql-java:8.0'

@@ -9,6 +9,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-allopen:$KOTLIN"
         classpath "org.springframework.boot:spring-boot-gradle-plugin:$SPRING_BOOT"
     }
+    wrapper.setDistributionType(Wrapper.DistributionType.ALL)
 }
 
 apply plugin: 'java'
@@ -21,7 +22,6 @@ sourceCompatibility = kit.jvm
 repositories {
     maven { url "https://dl.bintray.com/kotlin/exposed" }
     maven { url "https://jitpack.io" }
-    maven { url  "https://dl.bintray.com/pgutkowski/Maven" }
     jcenter()
 }
 
