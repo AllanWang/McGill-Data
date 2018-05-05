@@ -19,7 +19,7 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
  * Course detail per semester
  */
 object Courses : Table(), DataReceiver<Course> {
-    val courseName = varchar("course_name", 30).primaryKey()
+    val courseName = varchar("course_name", 19).primaryKey()
     val description = varchar("course_description", 200).nullable()
     val teacher = varchar("teacher", 50).nullable()
     val season = enumerationByName("season", 10, Season::class.java)

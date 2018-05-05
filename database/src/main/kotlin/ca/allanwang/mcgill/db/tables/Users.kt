@@ -11,16 +11,16 @@ import org.jetbrains.exposed.sql.statements.UpdateBuilder
  * -----------------------------------------
  */
 object Users : Table(), DataReceiver<User> {
-    val shortUser = varchar("short_user", 20).primaryKey()
-    val id = varchar("id", 20).uniqueIndex()
-    val longUser = varchar("long_user", 50).uniqueIndex()
+    val shortUser = varchar("short_user", 19).primaryKey()
+    val id = varchar("id", 19).uniqueIndex()
+    val longUser = varchar("long_user", 35).uniqueIndex()
     val activeSince = long("active_since")
     val displayName = varchar("display_name", 50)
     val email = varchar("email", 50)
     val faculty = varchar("faculty", 40).nullable()
-    val givenName = varchar("given_name", 20)
-    val lastName = varchar("last_name", 20)
-    val middleName = varchar("middle_name", 20).nullable()
+    val givenName = varchar("given_name", 19)
+    val lastName = varchar("last_name", 30)
+    val middleName = varchar("middle_name", 19).nullable()
 //    val lastLdapSync = long("ldap_sync_time")
 
     override fun toTable(u: UpdateBuilder<*>, d: User) {
