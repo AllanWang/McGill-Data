@@ -40,6 +40,17 @@ interface McGillLdapContract {
      * attempt to query for a matching list of users
      */
     fun autoSuggest(like: String, auth: Pair<String, String>, limit: Int): List<User>
+
+    /**
+     * Returns a nonnull ldap context if authentication is successful
+     * Note that the user must be a short user
+     */
+    fun bindLdap(auth: Pair<String, String>): LdapContext?
+
+    /**
+     * Returns a nonnull ldap context if authentication is successful
+     */
+    fun bindLdap(shortUser: String, password: String): LdapContext?
 }
 
 object McGillLdap : McGillLdapContract, WithLogging() {
@@ -130,17 +141,13 @@ object McGillLdap : McGillLdapContract, WithLogging() {
         put("com.sun.jndi.ldap.connect.timeout", "500")
     }
 
-    private fun bindLdap(auth: Pair<String, String>) = bindLdap(auth.first, auth.second)
+    override fun bindLdap(auth: Pair<String, String>) = bindLdap(auth.first, auth.second)
 
-    /**
-     * Create [LdapContext] for given credentials
-     * [user] must be a short user
-     */
-    private fun bindLdap(user: String, password: String): LdapContext? = try {
-        val auth = createAuthMap(user, password)
+    override fun bindLdap(shortUser: String, password: String): LdapContext? = try {
+        val auth = createAuthMap(shortUser, password)
         InitialLdapContext(auth, null)
     } catch (e: Exception) {
-        log.error("Failed to bind to LDAP for $user", e)
+        log.error("Failed to bind to LDAP for $shortUser", e)
         null
     }
 
