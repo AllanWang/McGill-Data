@@ -13,16 +13,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 
-object UserWiring : TableWiring(Users,
-        singleQueryArgs = argDefinitions(Users.shortUser,
-                Users.longUser,
-                Users.id),
-        listQueryArgs = argDefinitions(Users.shortUser,
-                Users.longUser,
-                Users.id,
-                Users.email,
-                Users.faculty))
-
 /**
  * Generic wiring for SQL tables
  */

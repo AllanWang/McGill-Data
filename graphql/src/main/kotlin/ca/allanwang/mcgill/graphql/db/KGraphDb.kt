@@ -4,6 +4,7 @@ import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.DbConfigs
 import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.graphql.Props
+import ca.allanwang.mcgill.graphql.UserWiring
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLOutputType
 
