@@ -3,6 +3,8 @@ package ca.allanwang.mcgill.graphql.db
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.DbConfigs
 import ca.allanwang.mcgill.db.bindings.connect
+import ca.allanwang.mcgill.graphql.CourseWiring
+import ca.allanwang.mcgill.graphql.GroupWiring
 import ca.allanwang.mcgill.graphql.Props
 import ca.allanwang.mcgill.graphql.UserWiring
 import graphql.schema.GraphQLFieldDefinition
@@ -19,7 +21,7 @@ object KGraphDb : WithLogging() {
         return registration[wiring]!!
     }
 
-    fun dbFields(): List<GraphQLFieldDefinition> = listOf(UserWiring).flatMap {
+    fun dbFields(): List<GraphQLFieldDefinition> = listOf(UserWiring, GroupWiring, CourseWiring).flatMap {
         listOf(it.singleQueryField(), it.listQueryField())
     }
 

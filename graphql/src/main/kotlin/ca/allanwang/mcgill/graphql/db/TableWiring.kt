@@ -125,24 +125,26 @@ abstract class TableWiring(private val table: Table,
     fun objectType() = graphQLObjectType {
         name(tableName)
         description("SQL access to $tableName")
-        fields(table.columns.map { fieldDefinition(it) })
+        fields(table.columns.map { fieldDefinition(GraphColumn(it)) })
     }
 
 
     companion object {
 
-        fun argDefinitions(vararg column: Column<*>) = column.map(this::argDefinition)
+        fun argDefinitions(vararg columns: Column<*>) = columns.map { argDefinition(GraphColumn(it)) }
 
-        fun argDefinition(column: Column<*>) = graphQLArgument {
-            name(column.name.toCamel())
-            description("Query for exact match with ${column.name}")
-            type(graphQLType(column) as GraphQLInputType)
+        fun argDefinitions(vararg graphCol: GraphColumn) = graphCol.map(this::argDefinition)
+
+        fun argDefinition(graphCol: GraphColumn) = graphQLArgument {
+            name(graphCol.name)
+            description("Query for exact match with ${graphCol.columnName}")
+            type(graphQLType(graphCol.column) as GraphQLInputType)
         }
 
-        fun fieldDefinition(column: Column<*>) = graphQLFieldDefinition {
-            name(column.name.toCamel())
-            val type = graphQLType(column) as GraphQLOutputType
-            type(if (!column.columnType.nullable) GraphQLNonNull(type) else type)
+        fun fieldDefinition(graphCol: GraphColumn) = graphQLFieldDefinition {
+            name(graphCol.name)
+            val type = graphQLType(graphCol.column) as GraphQLOutputType
+            type(if (!graphCol.nullable) GraphQLNonNull(type) else type)
         }
 
         /**
