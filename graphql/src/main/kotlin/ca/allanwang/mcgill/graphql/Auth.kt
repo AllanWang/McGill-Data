@@ -39,4 +39,6 @@ object Auth {
      */
     fun validate(id: String, shortUser: String): Session? = Sessions[id, shortUser]
 
+    fun delete(id: String, shortUser: String): Boolean = Sessions.delete(id, shortUser)
+
 }
