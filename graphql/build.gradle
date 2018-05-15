@@ -16,6 +16,7 @@ dependencies {
 
     compile "ca.allanwang.kit:props:$KIT"
 
+    compile project(":ldap")
     compile project(":database")
 
     testCompile('org.springframework.boot:spring-boot-starter-test')

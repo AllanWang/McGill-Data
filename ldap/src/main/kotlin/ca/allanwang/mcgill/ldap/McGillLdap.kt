@@ -40,25 +40,44 @@ interface McGillLdapContract {
      * attempt to query for a matching list of users
      */
     fun autoSuggest(like: String, auth: Pair<String, String>, limit: Int): List<User>
+
+    /**
+     * Helper function to get the [Sam] type of the provided string
+     */
+    fun samType(sam: String): Sam
+}
+
+enum class Sam {
+    SHORT_USER, LONG_USER, STUDENT_ID, NONE
 }
 
 object McGillLdap : McGillLdapContract, WithLogging() {
 
-    val shortUserRegex = Regex("[a-zA-Z]+[0-9]*")
-    val studentIdRegex = Regex("[0-9]+")
+    private val shortUserRegex = Regex("[a-zA-Z]+[0-9]*")
+    private val studentIdRegex = Regex("[0-9]+")
+    private val longUserRegex = Regex("[a-zA-Z]+\\.[a-zA-Z]")
+
+    override fun samType(sam: String): Sam = when {
+        shortUserRegex.matches(sam) -> Sam.SHORT_USER
+        longUserRegex.matches(sam) -> Sam.LONG_USER
+        studentIdRegex.matches(sam) -> Sam.STUDENT_ID
+        else -> Sam.NONE
+    }
 
     override fun queryUser(username: String?, auth: Pair<String, String>): User? {
         if (username == null) return null
-        if (username.matches(studentIdRegex)) {
-            log.error("Cannot query by student id $username")
+        val usernameType = samType(username)
+        if (usernameType != Sam.SHORT_USER && usernameType != Sam.LONG_USER) {
+            log.error("Cannot query $username")
             return null
         }
-        if (!auth.first.matches(shortUserRegex)) {
+        if (samType(auth.first) != Sam.SHORT_USER) {
             log.error("Queried user auth ${auth.first} is not a short user")
             return null
         }
         val ctx = bindLdap(auth) ?: return null
-        val searchName = if (username.contains(".")) "userPrincipalName=$username@mail.mcgill.ca"
+        // todo check whether we should append mail.mcgill.ca ourselves, or if mcgill.ca is also valid
+        val searchName = if (usernameType == Sam.LONG_USER) "userPrincipalName=$username@mail.mcgill.ca"
         else "sAMAccountName=$username"
         val searchFilter = "(&(objectClass=user)($searchName))"
         val searchControls = SearchControls()

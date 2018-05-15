@@ -1,20 +1,25 @@
 package ca.allanwang.mcgill.models.data
 
+import ca.allanwang.mcgill.models.bindings.McGillModel
 import ca.allanwang.mcgill.models.internal.Base64
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 data class Session(
         val id: String,
         val shortUser: String,
-        var expiration: Long = -1L,
-        var persistent: Boolean = true
-) {
-
-    fun isValid() = expiration == -1L || expiration > System.currentTimeMillis()
+        val role: String
+) : McGillModel {
 
     val token: String
+        @JsonIgnore
         get() = "$shortUser:$id"
 
     companion object {
+
+        const val NONE = "none"
+        const val USER = "user"
+        const val CTFER = "ctfer"
+        const val ELDER = "elder"
 
         private const val BASE_64_FLAGS = Base64.NO_WRAP or Base64.URL_SAFE
 
