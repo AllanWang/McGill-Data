@@ -6,6 +6,8 @@ notifications:
   email: false
 before_script:
   - psql -c 'create database travis_ci_test;' -U postgres
+script:
+  - bash ./travis-ci.sh
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
