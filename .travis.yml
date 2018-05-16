@@ -2,6 +2,8 @@ language: java
 os: linux
 services:
   - postgresql
+addons:
+  postgresql: "10.4"
 notifications:
   email: false
 before_script:
