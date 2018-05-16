@@ -3,6 +3,7 @@ package ca.allanwang.mcgill.ldap
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.test.TestProps
 import org.junit.Assume
+import org.junit.BeforeClass
 import org.junit.Test
 import kotlin.test.*
 
@@ -13,10 +14,10 @@ class LdapTest {
 
         private const val CSCIEN2 = "cscien2"
 
-        init {
-            Assume.assumeTrue("Testing LDAP connection",
-                    McGillLdap.queryUser(CSCIEN2, TestProps.auth) != null)
-        }
+        @BeforeClass
+        @JvmStatic
+        fun init() = Assume.assumeTrue("Testing LDAP connection",
+                McGillLdap.queryUser(CSCIEN2, TestProps.auth) != null)
 
     }
 
