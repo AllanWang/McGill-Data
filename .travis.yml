@@ -3,11 +3,16 @@ os: linux
 services:
   - postgresql
 addons:
-  postgresql: "10.4"
+  postgresql: "10"
+    apt:
+      packages:
+        - postgresql-10
+        - postgresql-client-10
+env:
+  global:
+    - PGPORT=5433
 notifications:
   email: false
-before_script:
-  - psql -c 'create database travis_ci_test;' -U postgres
 script:
   - bash ./travis-ci.sh
 before_cache:
