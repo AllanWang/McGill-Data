@@ -35,10 +35,17 @@ class DbTest {
     @Test
     fun simpleTest() = testTransaction { }
 
+    @Test
+    fun simpleTest2() = testTransaction { }
+
 
     @Test
-    fun batchInsert() = testTransaction {
-        testUser(19).save()
+    fun batchInsert() = try {
+        testTransaction {
+            testUser(19).save()
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 
     @Test
