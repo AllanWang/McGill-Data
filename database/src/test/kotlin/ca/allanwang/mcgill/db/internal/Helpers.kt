@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.SchemaUtils.drop
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.test.fail
 
 object DbSetup {
     fun connect() {
@@ -26,9 +27,13 @@ object DbSetup {
 }
 
 fun <T> testTransaction(vararg tables: Table = arrayOf(TestUsers, TestGroups, TestUserGroups),
-                        statement: Transaction.() -> T): T = transaction {
-    stdlog()
-    drop(*tables)
-    create(*tables)
-    statement()
+                        statement: Transaction.() -> T): T = try {
+    transaction {
+        stdlog()
+        drop(*tables)
+        create(*tables)
+        statement()
+    }
+} catch (e: Exception) {
+    fail("Transaction error: ${e.message}")
 }
