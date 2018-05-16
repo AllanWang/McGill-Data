@@ -4,10 +4,7 @@ import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.DbConfigs
 import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.db.tables.*
-import ca.allanwang.mcgill.graphql.CourseWiring
-import ca.allanwang.mcgill.graphql.GroupWiring
-import ca.allanwang.mcgill.graphql.Props
-import ca.allanwang.mcgill.graphql.UserWiring
+import ca.allanwang.mcgill.graphql.*
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLOutputType
 import org.jetbrains.exposed.sql.SchemaUtils.create
@@ -40,6 +37,8 @@ object KGraphDb : WithLogging() {
                     UserGroups, Groups,
                     UserCourses, Courses)
         }
+        if (Props.ldapEnabled)
+            Auth.deleteTestUser()
         log.info("Initialized")
     }
 

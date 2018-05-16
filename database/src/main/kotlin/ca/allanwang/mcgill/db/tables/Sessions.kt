@@ -83,6 +83,10 @@ object Sessions : Table(), Loggable by WithLogging() {
         result != 0
     }
 
+    fun deleteAll(shortUser: String): Int = transaction {
+        deleteIgnoreWhere { Sessions.shortUser eq shortUser }
+    }
+
     /**
      * Delete expired sessions
      */
