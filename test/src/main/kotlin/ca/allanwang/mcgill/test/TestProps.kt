@@ -8,6 +8,7 @@ object TestProps : PropHolder("priv.properties", "../priv.properties") {
     val user: String by string("TEST_USER", errorMessage = "No user provided")
     val password: String by string("TEST_PASSWORD", errorMessage = "No password provided")
 
+    val testLdap: Boolean by boolean("TEST_LDAP", false)
     val hasTestUser: Boolean by lazy { user.isNotBlank() && password.isNotBlank() }
 
     val db: String by string("TEST_DB")

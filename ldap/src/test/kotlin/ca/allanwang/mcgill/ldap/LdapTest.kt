@@ -17,7 +17,7 @@ class LdapTest {
         @BeforeClass
         @JvmStatic
         fun init() = Assume.assumeTrue("Testing LDAP connection",
-                McGillLdap.queryUser(CSCIEN2, TestProps.auth) != null)
+                TestProps.testLdap && McGillLdap.queryUser(CSCIEN2, TestProps.auth) != null)
 
     }
 
