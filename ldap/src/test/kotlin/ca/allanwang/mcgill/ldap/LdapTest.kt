@@ -1,7 +1,7 @@
 package ca.allanwang.mcgill.ldap
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.test.Props
+import ca.allanwang.mcgill.test.TestProps
 import org.junit.Assume
 import org.junit.Test
 import kotlin.test.*
@@ -15,14 +15,14 @@ class LdapTest {
 
         init {
             Assume.assumeTrue("Testing LDAP connection",
-                    McGillLdap.queryUser(CSCIEN2, Props.testAuth) != null)
+                    McGillLdap.queryUser(CSCIEN2, TestProps.auth) != null)
         }
 
     }
 
     @Test
     fun bindCscien2() {
-        val user = McGillLdap.queryUser(CSCIEN2, Props.testAuth)
+        val user = McGillLdap.queryUser(CSCIEN2, TestProps.auth)
         assertNotNull(user)
         log.info(user!!)
         assertEquals("Ctf Science", user.displayName)
@@ -33,7 +33,7 @@ class LdapTest {
 
     @Test
     fun bindOtherLong() {
-        val user = McGillLdap.queryUser("allan.wang", Props.testAuth)
+        val user = McGillLdap.queryUser("allan.wang", TestProps.auth)
         assertNotNull(user)
         log.info(user!!)
     }
@@ -44,14 +44,14 @@ class LdapTest {
     @Test
     fun bindOtherUser() {
         val shortUser = "yxia19"
-        val user = McGillLdap.queryUser(shortUser, Props.testAuth) ?: fail("Null user")
+        val user = McGillLdap.queryUser(shortUser, TestProps.auth) ?: fail("Null user")
         log.info(user)
         assertEquals(shortUser, user.shortUser, "short user mismatch")
     }
 
     @Test
     fun bind() {
-        val user = McGillLdap.queryUser("azsedzzz", Props.testAuth)
+        val user = McGillLdap.queryUser("azsedzzz", TestProps.auth)
         assertNull(user, "User azsedzzz should be null")
     }
 

@@ -75,7 +75,8 @@ subprojects {
         testCompile kitDependency.junit
         testCompile kitDependency.kotlinTest
 
-//        if (it.name != 'test')
+        if (project.name != 'test')
+            testCompile project(":test")
 
     }
 

@@ -1,14 +1,12 @@
 package ca.allanwang.mcgill.db.internal
 
-import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.DbConfigs
 import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.db.bindings.stdlog
 import ca.allanwang.mcgill.db.tables.TestGroups
 import ca.allanwang.mcgill.db.tables.TestUserGroups
 import ca.allanwang.mcgill.db.tables.TestUsers
-import ca.allanwang.mcgill.test.Props
-import org.jetbrains.exposed.sql.SchemaUtils
+import ca.allanwang.mcgill.test.TestProps
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
 import org.jetbrains.exposed.sql.Table
@@ -18,10 +16,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object DbSetup {
     fun connect() {
         val configs: DbConfigs = object : DbConfigs {
-            override val db: String = Props.testDb
-            override val dbUser: String = Props.testDbUser
-            override val dbPassword: String = Props.testDbPassword
-            override val dbDriver: String = Props.testDriver
+            override val db: String = TestProps.db
+            override val dbUser: String = TestProps.dbUser
+            override val dbPassword: String = TestProps.dbPassword
+            override val dbDriver: String = TestProps.driver
         }
         configs.connect()
     }

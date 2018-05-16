@@ -65,10 +65,4 @@ class JsonTest {
 //        val publicSession = session.toSession().passThroughJackson()
 //        assertEquals(session._id, publicSession._id)
 //    }
-
-    @Test
-    fun user() {
-        sanityTest<User>()
-        sanityTest<User>()
-    }
 }
