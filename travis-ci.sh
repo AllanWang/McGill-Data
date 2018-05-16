@@ -14,5 +14,7 @@ echo "TEST_DB_PASSWORD=travis" >> priv.properties
 
 printf "Running gradle test\n"
 
+service postgresql status
+
 chmod +x ./gradlew
 ./gradlew test
