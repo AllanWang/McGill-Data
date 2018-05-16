@@ -3,7 +3,6 @@ package ca.allanwang.mcgill.db.tables
 import ca.allanwang.mcgill.db.bindings.DataReceiver
 import ca.allanwang.mcgill.db.bindings.OneToManyReceiver
 import ca.allanwang.mcgill.db.bindings.referenceCol
-import org.jetbrains.exposed.dao.IdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder

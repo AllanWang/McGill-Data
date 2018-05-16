@@ -4,7 +4,10 @@ import ca.allanwang.mcgill.db.bindings.DataReceiver
 import ca.allanwang.mcgill.db.bindings.OneToManyReceiver
 import ca.allanwang.mcgill.db.bindings.referenceCol
 import ca.allanwang.mcgill.models.data.User
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
 
 /*

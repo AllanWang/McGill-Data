@@ -31,7 +31,7 @@ object Auth : WithLogging() {
                 return null
             }
             // allow for basic test user
-            return createTestUser()
+            return createTestSession()
         }
         if (McGillLdap.samType(sam) == Sam.SHORT_USER)
             return authenticateImpl(sam, password, expiresIn)
@@ -50,21 +50,21 @@ object Auth : WithLogging() {
 
     private const val testShortUser = "unit123"
 
-    fun createTestUser(): Session {
-        val testUser = User(
-                shortUser = testShortUser,
-                id = "unittest",
-                longUser = "unit.test",
-                displayName = "Unit Test",
-                givenName = "Unit",
-                lastName = "Test",
-                email = "unit.test@mail.mcgill.ca",
-                faculty = "Unit Test",
-                groups = listOf("Unit Test"))
-        return Sessions.create(testUser, -1)
-    }
+    private fun createTestSession(): Session =
+            Sessions.create(createTestUser(), -1)
 
-    fun deleteTestUser() {
+    internal fun createTestUser(): User = User(
+            shortUser = testShortUser,
+            id = "unittest",
+            longUser = "unit.test",
+            displayName = "Unit Test",
+            givenName = "Unit",
+            lastName = "Test",
+            email = "unit.test@mail.mcgill.ca",
+            faculty = "Unit Test",
+            groups = listOf("Unit Test"))
+
+    internal fun deleteTestUser() {
         Sessions.deleteAll(testShortUser)
         transaction {
             Users.deleteWhere { Users.shortUser eq testShortUser }

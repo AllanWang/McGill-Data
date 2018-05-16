@@ -1,6 +1,8 @@
 package ca.allanwang.mcgill.db.tables
 
-import ca.allanwang.mcgill.db.bindings.*
+import ca.allanwang.mcgill.db.bindings.DataReceiver
+import ca.allanwang.mcgill.db.bindings.delete
+import ca.allanwang.mcgill.db.bindings.save
 import ca.allanwang.mcgill.models.data.User
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
