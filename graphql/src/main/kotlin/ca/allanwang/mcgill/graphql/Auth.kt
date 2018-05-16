@@ -1,5 +1,6 @@
 package ca.allanwang.mcgill.graphql
 
+import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.bindings.mapSingle
 import ca.allanwang.mcgill.db.tables.Sessions
 import ca.allanwang.mcgill.db.tables.Users
@@ -8,9 +9,9 @@ import ca.allanwang.mcgill.ldap.Sam
 import ca.allanwang.mcgill.models.data.Session
 import org.jetbrains.exposed.sql.select
 
-object Auth {
+object Auth : WithLogging() {
 
-    private const val defaultExpiresIn: Long = 30L * 24 * 60 * 60 * 1000 // 30 days
+    const val defaultExpiresIn: Long = 30L * 24 * 60 * 60 * 1000 // 30 days
 
     /**
      * Authenticate a user given some [sam] and a [password]
@@ -18,6 +19,10 @@ object Auth {
      * This call guarantees one pass through [McGillLdap], to ensure that the user is authenticated
      */
     fun authenticate(sam: String, password: String, expiresIn: Long = defaultExpiresIn): Session? {
+        if (!Props.ldapEnabled) {
+            log.warn("Ldap disabled")
+            return null
+        }
         if (McGillLdap.samType(sam) == Sam.SHORT_USER)
             return authenticateImpl(sam, password, expiresIn)
         val shortUser = Users.slice(Users.shortUser).select { Users.run { samMatcher(sam) } }

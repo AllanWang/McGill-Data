@@ -9,6 +9,9 @@ object Props : PropHolder("prod.properties", "../prod.properties"), DbConfigs {
     val user: String by string("LDAP_USER", errorMessage = "No user provided")
     val password: String by string("LDAP_PASSWORD", errorMessage = "No password provided")
 
+    val debug: Boolean by boolean("DEBUG", true)
+    val ldapEnabled: Boolean by boolean("LDAP_ENABLED", !debug)
+
     val hasUser: Boolean by lazy { user.isNotBlank() && password.isNotBlank() }
 
     override val db: String by string("DB")
