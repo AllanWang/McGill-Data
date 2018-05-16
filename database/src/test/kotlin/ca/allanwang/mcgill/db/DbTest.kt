@@ -32,52 +32,50 @@ class DbTest {
         TestUserGroups.assertCount(userCount * 2)
     }
 
+    @Test
+    fun simpleTest() = testTransaction { }
+
 
     @Test
-    fun batchInsert() {
-        testTransaction {
-            testUser(19).save()
-        }
+    fun batchInsert() = testTransaction {
+        testUser(19).save()
     }
 
     @Test
-    fun test() {
+    fun test() = testTransaction {
 
-        testTransaction {
+        assertUserCount(0)
 
-            assertUserCount(0)
+        val test1 = testUser(1)
 
-            val test1 = testUser(1)
+        // first save
+        test1.save()
 
-            // first save
-            test1.save()
+        assertUserCount(1)
+        test1.assertMatch()
 
-            assertUserCount(1)
-            test1.assertMatch()
+        test1.name = test1.name + "$2"
 
-            test1.name = test1.name + "$2"
+        // updating attribute; table size should not change
+        test1.save()
+        assertUserCount(1)
+        test1.assertMatch()
 
-            // updating attribute; table size should not change
-            test1.save()
-            assertUserCount(1)
-            test1.assertMatch()
+        val test2 = testUser(2)
 
-            val test2 = testUser(2)
+        // no change should occur
+        test2.delete()
+        assertUserCount(1)
 
-            // no change should occur
-            test2.delete()
-            assertUserCount(1)
+        // saving new user
+        test2.save()
+        assertUserCount(2)
+        test2.assertMatch()
 
-            // saving new user
-            test2.save()
-            assertUserCount(2)
-            test2.assertMatch()
-
-            // deleting valid user
-            test1.delete()
-            TestUsers.assertCount(1)        // only user2 remains
-            TestGroups.assertCount(3)       // user1's group still exists
-            TestUserGroups.assertCount(2)   // only mappings for user2
-        }
+        // deleting valid user
+        test1.delete()
+        TestUsers.assertCount(1)        // only user2 remains
+        TestGroups.assertCount(3)       // user1's group still exists
+        TestUserGroups.assertCount(2)   // only mappings for user2
     }
 }

@@ -32,10 +32,8 @@ class DbMcGillTest {
             activeSince = System.currentTimeMillis())
 
     @Test
-    fun test() {
-        testTransaction(Users, Groups, UserGroups) {
-            val user1 = testUser(1)
-            user1.save()
-        }
+    fun test() = testTransaction(Users, Groups, UserGroups) {
+        val user1 = testUser(1)
+        user1.save()
     }
 }
