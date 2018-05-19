@@ -1,6 +1,5 @@
 package ca.allanwang.mcgill.graphql.server
 
-import ca.allanwang.kit.logger.Loggable
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.graphql.Auth
 import ca.allanwang.mcgill.models.data.Session
@@ -55,10 +54,12 @@ class AuthenticationFilter : GenericFilterBean() {
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         try {
             val httpRequest = request as? HttpServletRequest ?: return log.trace("Aborting non http request")
+            log.info("p ${request.pathTranslated} c ${request.contextPath} s ${request.servletPath}")
             val authorization = httpRequest.getHeader(AUTHORIZATION_PROPERTY) ?: return
             val session = getSession(authorization) ?: return
 
-            log.trace("Hello $session")
+            log.info("Hello $session")
+            println("HHH $session ${request.pathInfo} ${request.pathTranslated} ${request.contextPath} ${request.servletPath}")
             httpRequest.setAttribute(SESSION, session)
         } catch (e: Exception) {
             log.error("Authentication Error", e)

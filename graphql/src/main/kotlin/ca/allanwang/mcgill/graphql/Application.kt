@@ -42,7 +42,7 @@ class ApplicationBootConfiguration : WithLogging("McGill GraphQL") {
     @Bean
     fun getCommandLineRunner(context: ApplicationContext): CommandLineRunner {
         servlet.setThrowExceptionIfNoHandlerFound(true)
-        log.info("HEEEE")
+        log.info("CommandLineRunner")
         return CommandLineRunner { }
     }
 
