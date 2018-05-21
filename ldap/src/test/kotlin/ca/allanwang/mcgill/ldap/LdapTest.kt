@@ -1,11 +1,9 @@
 package ca.allanwang.mcgill.ldap
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.test.Props
 import org.junit.Assume
 import org.junit.Test
 import kotlin.test.*
-
 
 class LdapTest {
 

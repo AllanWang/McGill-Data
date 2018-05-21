@@ -1,9 +1,6 @@
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN"
     compile "org.postgresql:postgresql:$POSTGRESQL"
-//    compile "org.jetbrains.exposed:exposed:$EXPOSED"
-    compile "com.github.AllanWang:Exposed:$EXPOSED"
 
+    compile project(":database-utils")
     compile project(":models")
-    testCompile project(":test")
 }
