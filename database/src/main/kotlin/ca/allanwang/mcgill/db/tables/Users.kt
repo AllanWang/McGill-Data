@@ -38,7 +38,7 @@ object Users : Table(), DataReceiver<User> {
     override val uniqueUpdateColumns: List<Column<*>> = listOf(shortUser)
 
     //todo move to graphql
-    private fun SqlExpressionBuilder.samMatcher(sam: String): Op<Boolean> =
+    fun SqlExpressionBuilder.samMatcher(sam: String): Op<Boolean> =
             (longUser eq sam) or (shortUser eq sam) or (id eq sam)
 
     override fun SqlExpressionBuilder.mapper(data: User): Op<Boolean> =

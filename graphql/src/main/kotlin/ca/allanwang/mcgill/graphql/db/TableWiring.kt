@@ -5,6 +5,9 @@ import ca.allanwang.mcgill.db.bindings.toCamel
 import ca.allanwang.mcgill.graphql.kotlin.graphQLArgument
 import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
 import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
+import ca.allanwang.mcgill.graphql.server.SessionContext
+import ca.allanwang.mcgill.models.data.Session
+import graphql.GraphQLException
 import graphql.Scalars
 import graphql.language.Field
 import graphql.schema.*
@@ -107,11 +110,17 @@ abstract class TableWiring(private val table: Table,
      */
     private val columnMap: Map<String, Column<*>> = table.columns.map { it.name.toCamel() to it }.toMap()
 
+    private val DataFetchingEnvironment.session: Session
+        get() = (getContext<Any?>() as? SessionContext)?.session ?: throw GraphQLException("Not authorized")
+
     fun singleQueryField() = graphQLFieldDefinition {
         name(name)
         argument(singleQueryArgs)
         type(KGraphDb.getObjectType(this@TableWiring))
-        dataFetcher { fetch(it).firstOrNull() }
+        dataFetcher {
+            println("Fetching ${it.session}")
+            fetch(it).firstOrNull()
+        }
     }
 
     fun listQueryField() = graphQLFieldDefinition {
