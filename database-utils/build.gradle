@@ -1,0 +1,4 @@
+dependencies {
+    compile "com.github.AllanWang:Exposed:$EXPOSED"
+    testImplementation project(":database-test")
+}

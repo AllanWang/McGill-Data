@@ -1,11 +1,9 @@
 package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.bindings.DbConfigs
-import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.db.tables.*
+import ca.allanwang.mcgill.db.utils.DbConfigs
 import ca.allanwang.mcgill.graphql.*
-import ca.allanwang.mcgill.graphql.server.SessionContext
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLOutputType
 import graphql.servlet.GraphQLContextBuilder

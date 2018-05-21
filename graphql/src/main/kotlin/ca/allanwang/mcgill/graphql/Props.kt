@@ -1,7 +1,7 @@
 package ca.allanwang.mcgill.graphql
 
 import ca.allanwang.kit.props.PropHolder
-import ca.allanwang.mcgill.db.bindings.DbConfigs
+import ca.allanwang.mcgill.db.utils.DbConfigs
 
 object Props : PropHolder("prod.properties", "../prod.properties"), DbConfigs {
 

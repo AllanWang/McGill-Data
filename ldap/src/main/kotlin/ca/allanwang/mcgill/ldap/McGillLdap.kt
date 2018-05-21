@@ -42,6 +42,7 @@ interface McGillLdapContract {
     fun autoSuggest(like: String, auth: Pair<String, String>, limit: Int): List<User>
 
     /**
+<<<<<<< HEAD
      * Helper function to get the [Sam] type of the provided string
      */
     fun samType(sam: String): Sam
@@ -49,6 +50,17 @@ interface McGillLdapContract {
 
 enum class Sam {
     SHORT_USER, LONG_USER, STUDENT_ID, NONE
+=======
+     * Returns a nonnull ldap context if authentication is successful
+     * Note that the user must be a short user
+     */
+    fun bindLdap(auth: Pair<String, String>): LdapContext?
+
+    /**
+     * Returns a nonnull ldap context if authentication is successful
+     */
+    fun bindLdap(shortUser: String, password: String): LdapContext?
+>>>>>>> origin/dev
 }
 
 object McGillLdap : McGillLdapContract, WithLogging() {
@@ -149,17 +161,13 @@ object McGillLdap : McGillLdapContract, WithLogging() {
         put("com.sun.jndi.ldap.connect.timeout", "500")
     }
 
-    private fun bindLdap(auth: Pair<String, String>) = bindLdap(auth.first, auth.second)
+    override fun bindLdap(auth: Pair<String, String>) = bindLdap(auth.first, auth.second)
 
-    /**
-     * Create [LdapContext] for given credentials
-     * [user] must be a short user
-     */
-    private fun bindLdap(user: String, password: String): LdapContext? = try {
-        val auth = createAuthMap(user, password)
+    override fun bindLdap(shortUser: String, password: String): LdapContext? = try {
+        val auth = createAuthMap(shortUser, password)
         InitialLdapContext(auth, null)
     } catch (e: Exception) {
-        log.error("Failed to bind to LDAP for $user", e)
+        log.error("Failed to bind to LDAP for $shortUser", e)
         null
     }
 
@@ -209,7 +217,7 @@ object McGillLdap : McGillLdapContract, WithLogging() {
                 email = attr("mail"),
                 middleName = attr("middleName"),
                 faculty = attr("department"),
-                id = attr("employeeID")
+                userId = attr("employeeID")
         )
         try {
             out.activeSince = dateFormat.parse(attr("whenCreated")).time
