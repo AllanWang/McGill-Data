@@ -1,38 +1,43 @@
 package ca.allanwang.mcgill.db.tables
 
-import ca.allanwang.mcgill.db.bindings.DataReceiver
-import ca.allanwang.mcgill.db.bindings.OneToManyReceiver
-import ca.allanwang.mcgill.db.bindings.referenceCol
-import ca.allanwang.mcgill.models.data.User
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.statements.UpdateBuilder
+import ca.allanwang.mcgill.models.data.Group
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
+import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.dao.IdTable
+import org.jetbrains.exposed.sql.ReferenceOption
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.insertIgnore
+import org.jetbrains.exposed.sql.transactions.transaction
 
 /*
  * -----------------------------------------
  * Shared Column definitions
  * -----------------------------------------
  */
-object Groups : Table(), DataReceiver<String> {
-    val groupName = varchar("group_name", 128).primaryKey()
-
-    override fun toTable(u: UpdateBuilder<*>, d: String) {
-        u[groupName] = d
-    }
-
-    override val uniqueUpdateColumns: List<Column<*>> = listOf(groupName)
-
-    override fun SqlExpressionBuilder.mapper(data: String): Op<Boolean> =
-            (groupName eq data)
+object Groups : IdTable<String>() {
+    override val id get() = groupName
+    val groupName = varchar("group_name", 128).primaryKey().entityId()
 }
 
-object UserGroups : Table(), OneToManyReceiver<User, String> {
-    val shortUser = referenceCol(Users.shortUser, 0)
-    val groupName = referenceCol(Groups.groupName, 1)
+class GroupDb(id: EntityID<String>) : Entity<String>(id) {
+    companion object : EntityClass<String, GroupDb>(Groups)
 
-    override fun toTable(u: UpdateBuilder<*>, one: User, many: String) {
-        u[shortUser] = one.shortUser
-        u[groupName] = many
+    val groupName: String get() = id.value
+
+    fun toJson(): Group = transaction {
+        Group(groupName)
     }
 
-    override fun getMany(one: User): List<String> = one.groups
+    fun associate(user: UserDb): GroupDb = apply {
+        UserGroups.insertIgnore {
+            it[this.shortUser] = user.id
+            it[this.groupName] = id
+        }
+    }
+}
+
+object UserGroups : Table() {
+    val shortUser = reference("short_user", Users, ReferenceOption.CASCADE).primaryKey(0)
+    val groupName = reference("group_name", Groups, ReferenceOption.CASCADE).primaryKey(1)
 }
