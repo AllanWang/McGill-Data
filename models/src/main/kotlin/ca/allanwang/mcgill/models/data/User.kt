@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  */
 data class User(
         var shortUser: String,
-        var id: String,
+        var userId: String,
         var longUser: String,
         var displayName: String,
         var givenName: String,
@@ -41,7 +41,7 @@ data class User(
 
     fun toUserQuery(): UserQuery = UserQuery(
             shortUser = shortUser,
-            id = id,
+            userId = userId,
             longUser = longUser,
             email = email,
             displayName = displayName)
@@ -60,7 +60,7 @@ data class User(
  */
 data class UserQuery(
         var shortUser: String,
-        var id: String,
+        var userId: String,
         var longUser: String,
         var displayName: String,
         var email: String

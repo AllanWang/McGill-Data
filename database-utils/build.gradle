@@ -1,5 +1,4 @@
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN"
-//    compile "org.jetbrains.exposed:exposed:$EXPOSED"
     compile "com.github.AllanWang:Exposed:$EXPOSED"
+    testImplementation project(":database-test")
 }

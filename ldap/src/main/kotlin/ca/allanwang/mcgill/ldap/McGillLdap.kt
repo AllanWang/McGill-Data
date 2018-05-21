@@ -197,7 +197,7 @@ object McGillLdap : McGillLdapContract, WithLogging() {
                 email = attr("mail"),
                 middleName = attr("middleName"),
                 faculty = attr("department"),
-                id = attr("employeeID")
+                userId = attr("employeeID")
         )
         try {
             out.activeSince = dateFormat.parse(attr("whenCreated")).time

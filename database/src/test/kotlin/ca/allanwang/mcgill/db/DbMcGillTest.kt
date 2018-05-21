@@ -1,13 +1,10 @@
 package ca.allanwang.mcgill.db
 
-import ca.allanwang.mcgill.db.bindings.save
 import ca.allanwang.mcgill.db.internal.DbSetup
 import ca.allanwang.mcgill.db.internal.testTransaction
 import ca.allanwang.mcgill.db.tables.Groups
 import ca.allanwang.mcgill.db.tables.UserGroups
 import ca.allanwang.mcgill.db.tables.Users
-import ca.allanwang.mcgill.db.tables.save
-import ca.allanwang.mcgill.models.data.Course
 import ca.allanwang.mcgill.models.data.User
 import org.junit.BeforeClass
 import org.junit.Test
@@ -21,7 +18,7 @@ class DbMcGillTest {
 
     fun testUser(id: Int) = User(
             shortUser = "testUser$id",
-            id = "testUserId$id",
+            userId = "testUserId$id",
             longUser = "test.user$id",
             displayName = "Test User $id",
             givenName = "Test User $id",

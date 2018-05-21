@@ -1,14 +1,12 @@
 package ca.allanwang.mcgill.db.internal
 
-import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.bindings.DbConfigs
-import ca.allanwang.mcgill.db.bindings.connect
-import ca.allanwang.mcgill.db.bindings.stdlog
+import ca.allanwang.mcgill.db.utils.DbConfigs
+import ca.allanwang.mcgill.db.utils.connect
+import ca.allanwang.mcgill.db.utils.stdlog
 import ca.allanwang.mcgill.db.tables.TestGroups
 import ca.allanwang.mcgill.db.tables.TestUserGroups
 import ca.allanwang.mcgill.db.tables.TestUsers
 import ca.allanwang.mcgill.test.Props
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.SchemaUtils.drop
 import org.jetbrains.exposed.sql.Table

@@ -1,4 +1,4 @@
-package ca.allanwang.mcgill.db.bindings
+package ca.allanwang.mcgill.db.utils
 
 private val regexUnderscoreToCamel = Regex("_([a-z\\d])")
 private val regexCamelToUnderscore = Regex("[A-Z\\d]")

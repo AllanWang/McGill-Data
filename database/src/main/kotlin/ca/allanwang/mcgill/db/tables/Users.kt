@@ -1,19 +1,26 @@
 package ca.allanwang.mcgill.db.tables
 
-import ca.allanwang.mcgill.db.bindings.*
+import ca.allanwang.mcgill.db.utils.newOrUpdate
+import ca.allanwang.mcgill.models.data.Course
+import ca.allanwang.mcgill.models.data.Semester
 import ca.allanwang.mcgill.models.data.User
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
+import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.dao.IdTable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.statements.UpdateBuilder
+import org.jetbrains.exposed.sql.transactions.transaction
 
 /*
  * -----------------------------------------
  * Shared Column definitions
  * -----------------------------------------
  */
-object Users : Table(), DataReceiver<User> {
-    val shortUser = varchar("short_user", 16).primaryKey()
+object Users : IdTable<String>() {
+    override val id: Column<EntityID<String>> get() = shortUser
+    val shortUser = varchar("short_user", 16).primaryKey().entityId()
     val longUser = varchar("long_user", 64).uniqueIndex()
-    val id = varchar("id", 32).uniqueIndex()
+    val userId = varchar("user_id", 32).uniqueIndex()
     val displayName = varchar("display_name", 64)
     val givenName = varchar("given_name", 64)
     val lastName = varchar("last_name", 64)
@@ -21,42 +28,66 @@ object Users : Table(), DataReceiver<User> {
     val email = varchar("email", 64)
     val faculty = varchar("faculty", 32).nullable()
     val activeSince = long("active_since")
+}
 
-    override fun toTable(u: UpdateBuilder<*>, d: User) {
-        u[activeSince] = d.activeSince
-        u[displayName] = d.displayName
-        u[email] = d.email
-        u[faculty] = d.faculty
-        u[givenName] = d.givenName
-        u[id] = d.id
-        u[lastName] = d.lastName
-        u[longUser] = d.longUser
-        u[middleName] = d.middleName
-        u[shortUser] = d.shortUser
+class UserDb(id: EntityID<String>) : Entity<String>(id) {
+    companion object : EntityClass<String, UserDb>(Users) {
+
+        /**
+         * Overridden to allow for queries matching any sam column
+         */
+        override fun findById(id: EntityID<String>): UserDb? {
+            val sam = id._value as? String ?: return super.findById(id)
+            return testCache(id) ?: with(Users) {
+                find { (shortUser eq sam) or (longUser eq sam) or (userId eq sam) }.firstOrNull()
+            }
+        }
+
+        fun new(user: User): UserDb = transaction {
+            newOrUpdate(user.shortUser) {
+                longUser = user.longUser
+                userId = user.userId
+                displayName = user.displayName
+                givenName = user.givenName
+                lastName = user.lastName
+                middleName = user.middleName
+                email = user.email
+                faculty = user.faculty
+                activeSince = user.activeSince
+            }.saveCourses(user.courses)
+        }
     }
 
-    override val uniqueUpdateColumns: List<Column<*>> = listOf(shortUser)
+    val shortUser: String get() = id.value
+    var longUser by Users.longUser
+    var userId by Users.userId
+    var displayName by Users.displayName
+    var givenName by Users.givenName
+    var lastName by Users.lastName
+    var middleName by Users.middleName
+    var email by Users.email
+    var faculty by Users.faculty
+    var activeSince by Users.activeSince
 
-    //todo move to graphql
-    private fun SqlExpressionBuilder.samMatcher(sam: String): Op<Boolean> =
-            (longUser eq sam) or (shortUser eq sam) or (id eq sam)
+    fun saveCourses(courses: List<Course>): UserDb = transaction {
+        courses.forEach {
+            CourseDb.newOrUpdate(it.courseName) {
+                season = it.season
+                year = it.year
+            }.associate(this@UserDb)
+        }
+        this@UserDb
+    }
 
-    override fun SqlExpressionBuilder.mapper(data: User): Op<Boolean> =
-            shortUser eq data.shortUser
-}
+    fun courses(semester: Semester) = transaction {
+        CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns)
+                .select { (UserCourses.shortUser eq shortUser) and (Courses.season eq semester.season) and (Courses.year eq semester.year) }
+                .orderBy(Courses.year to SortOrder.DESC).orderBy(Courses.season to SortOrder.DESC))
+    }
 
+    fun courses(take: Int) = transaction {
+        CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns).select { UserCourses.shortUser eq shortUser }.limit(take)
+                .orderBy(Courses.year to SortOrder.DESC).orderBy(Courses.season to SortOrder.DESC))
+    }
 
-/*
- * -----------------------------------------------------
- * Model bindings
- * -----------------------------------------------------
- */
-fun User.save() {
-    Users.save(this)
-    UserCourses.save(this, Courses)
-    UserGroups.save(this, Groups)
-}
-
-fun User.delete() {
-    Users.delete(this)
 }

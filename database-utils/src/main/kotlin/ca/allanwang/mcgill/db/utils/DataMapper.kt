@@ -1,4 +1,4 @@
-package ca.allanwang.mcgill.db.bindings
+package ca.allanwang.mcgill.db.utils
 
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Query

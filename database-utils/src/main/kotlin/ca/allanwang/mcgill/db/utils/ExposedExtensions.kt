@@ -1,5 +1,7 @@
-package ca.allanwang.mcgill.db.bindings
+package ca.allanwang.mcgill.db.utils
 
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.sql.*
 
 
@@ -51,3 +53,17 @@ fun Transaction.stdlog() = logger.addLogger(StdOutSqlLogger)
 
 fun ResultRow.toMap(columns: Collection<Column<*>>): Map<String, Any?> =
         columns.map { it.toSQL(QueryBuilder(false)) to this[it] }.toMap()
+
+fun FieldSet.take(count: Int,
+                  order: Pair<Column<*>, SortOrder>? = null,
+                  where: SqlExpressionBuilder.() -> Op<Boolean>): Query =
+        select(where).limit(count).run {
+            if (order != null) orderBy(order)
+            else this
+        }
+
+fun <ID : Comparable<ID>, T: Entity<ID>> EntityClass<ID, T>.newOrUpdate(id: ID, update: T.() -> Unit):T {
+    val existing = findById(id)
+    return if (existing != null) existing.apply(update)
+    else new(id, update)
+}
