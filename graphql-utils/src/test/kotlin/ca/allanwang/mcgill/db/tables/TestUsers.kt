@@ -1,13 +1,11 @@
 package ca.allanwang.mcgill.db.tables
 
-import ca.allanwang.mcgill.db.bindings.*
+import ca.allanwang.mcgill.db.utils.*
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.statements.UpdateBuilder
-import kotlin.test.assertTrue
-import kotlin.test.fail
 
 data class TestUser(var id: String, var name: String, var groups: List<TestGroup>) : ColMapper {
 

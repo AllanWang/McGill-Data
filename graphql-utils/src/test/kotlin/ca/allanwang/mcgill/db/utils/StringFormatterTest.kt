@@ -1,4 +1,4 @@
-package ca.allanwang.mcgill.db.bindings
+package ca.allanwang.mcgill.db.utils
 
 import org.junit.Test
 import kotlin.test.assertEquals

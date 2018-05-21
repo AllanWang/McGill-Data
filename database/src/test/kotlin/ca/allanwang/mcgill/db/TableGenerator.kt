@@ -11,7 +11,7 @@ import kotlin.reflect.jvm.jvmErasure
 fun main(vararg args: String) {
     TableGenerator.generate<User> {
         primaryKey = User::shortUser
-        unique = setOf(User::longUser, User::id)
+        unique = setOf(User::longUser, User::userId)
     }
 }
 

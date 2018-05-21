@@ -71,12 +71,20 @@ subprojects {
         archives javadocJar
     }
 
-    dependencies {
-        compile kitDependency.kotlin
-        compile "ca.allanwang.kit:logger:$KIT"
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events "PASSED", "FAILED", "SKIPPED"
+            showStandardStreams = true
+            exceptionFormat = 'full'
+        }
+    }
 
-        testCompile kitDependency.junit
-        testCompile kitDependency.kotlinTest
+    dependencies {
+        implementation kitDependency.kotlin
+        implementation "ca.allanwang.kit:logger:$KIT"
+
+        testImplementation kitDependency.kotlinTest
 
 //        if (it.name != 'test')
 

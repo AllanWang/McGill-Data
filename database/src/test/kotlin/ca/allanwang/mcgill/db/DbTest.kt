@@ -1,7 +1,7 @@
 package ca.allanwang.mcgill.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.bindings.getMap
+import ca.allanwang.mcgill.db.utils.getMap
 import ca.allanwang.mcgill.db.internal.DbSetup
 import ca.allanwang.mcgill.db.internal.testTransaction
 import ca.allanwang.mcgill.db.tables.*
