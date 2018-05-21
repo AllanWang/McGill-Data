@@ -2,6 +2,7 @@ package ca.allanwang.mcgill.db.tables
 
 import ca.allanwang.mcgill.db.utils.newOrUpdate
 import ca.allanwang.mcgill.models.data.Course
+import ca.allanwang.mcgill.models.data.Group
 import ca.allanwang.mcgill.models.data.Semester
 import ca.allanwang.mcgill.models.data.User
 import org.jetbrains.exposed.dao.Entity
@@ -71,7 +72,7 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
 
     fun saveCourses(courses: List<Course>): UserDb = transaction {
         courses.forEach {
-            CourseDb.newOrUpdate(it.courseName) {
+            CourseDb.newOrUpdate(it.name) {
                 season = it.season
                 year = it.year
             }.associate(this@UserDb)
@@ -88,6 +89,18 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
     fun courses(take: Int) = transaction {
         CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns).select { UserCourses.shortUser eq shortUser }.limit(take)
                 .orderBy(Courses.year to SortOrder.DESC).orderBy(Courses.season to SortOrder.DESC))
+    }
+
+    fun saveGroups(groups: List<Group>): UserDb = transaction {
+        groups.forEach {
+            GroupDb.newOrUpdate(it.name) {}.associate(this@UserDb)
+        }
+        this@UserDb
+    }
+
+    fun groups(take: Int) = transaction {
+        GroupDb.wrapRows((UserGroups innerJoin Groups).slice(Groups.columns).select { UserGroups.shortUser eq shortUser }.limit(take)
+                .orderBy(Groups.groupName to SortOrder.ASC))
     }
 
 }

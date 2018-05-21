@@ -6,7 +6,6 @@ import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.EntityID
 import org.jetbrains.exposed.dao.IdTable
-import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insertIgnore
@@ -21,7 +20,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
  * Course detail per semester
  */
 object Courses : IdTable<String>() {
-    override val id: Column<EntityID<String>> get() = courseName
+    override val id get() = courseName
     val courseName = varchar("course_name", 32).primaryKey().entityId()
     val season = enumeration("season", Season::class.java)
     val year = integer("year")
@@ -32,8 +31,7 @@ object Courses : IdTable<String>() {
 class CourseDb(id: EntityID<String>) : Entity<String>(id) {
     companion object : EntityClass<String, CourseDb>(Courses)
 
-    val courseName: String
-        get() = id.value
+    val courseName: String get() = id.value
     var description by Courses.description
     var teacher by Courses.teacher
     var season by Courses.season

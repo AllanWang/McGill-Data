@@ -5,9 +5,9 @@ import java.util.*
 
 /**
  * Model for a group with a semester attached
- * [courseName] typically follows the format NAME-NUMBER-SECTION; eg COMP-202-001
+ * [name] typically follows the format NAME-NUMBER-SECTION; eg COMP-202-001
  */
-data class Course(val courseName: String,
+data class Course(val name: String,
                   val description: String? = null,
                   val teacher: String? = null,
                   val season: Season,
