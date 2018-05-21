@@ -3,6 +3,9 @@ package ca.allanwang.mcgill.graphql.server
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.graphql.Auth
 import ca.allanwang.mcgill.models.data.Session
+import graphql.servlet.GraphQLContext
+import graphql.servlet.GraphQLContextBuilder
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatus
@@ -14,11 +17,13 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import java.util.*
 import javax.servlet.FilterChain
 import javax.servlet.ServletRequest
 import javax.servlet.ServletResponse
 import javax.servlet.annotation.WebFilter
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 
 //@Configuration
@@ -61,6 +66,7 @@ class AuthenticationFilter : GenericFilterBean() {
             log.info("Hello $session")
             println("HHH $session ${request.pathInfo} ${request.pathTranslated} ${request.contextPath} ${request.servletPath}")
             httpRequest.setAttribute(SESSION, session)
+            (response as HttpServletResponse).sendError(404, "Test")
         } catch (e: Exception) {
             log.error("Authentication Error", e)
         } finally {
@@ -106,6 +112,20 @@ class AuthenticationFilter : GenericFilterBean() {
 
 }
 
+class SessionContext(request: Optional<HttpServletRequest>,
+                     response: Optional<HttpServletResponse>) : GraphQLContext(request, response) {
+
+    init {
+        println("Session context")
+    }
+
+    val session: Session? by lazy {
+        if (!request.isPresent) return@lazy null
+        request.get().getAttribute(SESSION) as? Session
+    }
+
+}
+
 /**
  * If any rest endpoint requires a session, it can simply request it as an argument
  * This resolver will fetch the session, if provided by the [AuthenticationFilter],
@@ -123,7 +143,6 @@ class SessionResolver : HandlerMethodArgumentResolver {
                     ?: fail(HttpStatus.UNAUTHORIZED, "No session provided")
 
 }
-
 
 @Configuration
 @EnableWebMvc

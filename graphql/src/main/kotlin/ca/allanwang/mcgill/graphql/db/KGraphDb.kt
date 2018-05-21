@@ -5,10 +5,13 @@ import ca.allanwang.mcgill.db.bindings.DbConfigs
 import ca.allanwang.mcgill.db.bindings.connect
 import ca.allanwang.mcgill.db.tables.*
 import ca.allanwang.mcgill.graphql.*
+import ca.allanwang.mcgill.graphql.server.SessionContext
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLOutputType
+import graphql.servlet.GraphQLContextBuilder
 import org.jetbrains.exposed.sql.SchemaUtils.create
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.context.annotation.Bean
 
 object KGraphDb : WithLogging() {
     private val registration: MutableMap<TableWiring, GraphQLOutputType> = mutableMapOf()
@@ -45,5 +48,6 @@ object KGraphDb : WithLogging() {
     fun destroy() {
         registration.clear()
     }
+
 }
 
