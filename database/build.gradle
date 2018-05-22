@@ -1,6 +1,7 @@
 dependencies {
     compile "org.postgresql:postgresql:$POSTGRESQL"
 
+    testCompile project(":database-test")
     compile project(":database-utils")
     compile project(":models")
 }

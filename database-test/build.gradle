@@ -1,7 +1,6 @@
 dependencies {
-    implementation project(":database")
+    implementation project(":database-utils")
     implementation group: 'com.h2database', name: 'h2', version: '1.4.197'
     implementation "org.jetbrains.kotlin:kotlin-test-junit:$KOTLIN"
-    implementation "org.slf4j:slf4j-nop:$SLF4J"
-    testImplementation "org.slf4j:slf4j-nop:$SLF4J"
+    compile "org.slf4j:slf4j-nop:$SLF4J"
 }
