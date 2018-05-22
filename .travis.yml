@@ -1,8 +1,4 @@
 language: java
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer
 os: linux
 notifications:
   email: false
