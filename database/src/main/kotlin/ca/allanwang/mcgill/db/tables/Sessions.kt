@@ -2,19 +2,24 @@ package ca.allanwang.mcgill.db.tables
 
 import ca.allanwang.kit.logger.Loggable
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.bindings.referenceCol
 import ca.allanwang.mcgill.models.data.Session
-import ca.allanwang.mcgill.models.data.User
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
+import org.jetbrains.exposed.dao.EntityID
+import org.jetbrains.exposed.dao.IdTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.math.BigInteger
 import java.security.SecureRandom
 import java.util.*
+import java.util.concurrent.TimeUnit
 
-object Sessions : Table(), Loggable by WithLogging() {
-    val id = varchar("id", 255).primaryKey()
-    val shortUser = referenceCol(Users.shortUser)
-    val expiration = long("expiration")
+object Sessions : IdTable<String>(), Loggable by WithLogging() {
+    override val id = varchar("id", 255).primaryKey().clientDefault { BigInteger(130, random).toString(32) }.entityId()
+    val shortUser = reference("short_user", Users, ReferenceOption.CASCADE)
+    val expiration = long("expiration").clientDefault { System.currentTimeMillis() + defaultExpiresIn }
+
+    val defaultExpiresIn: Long = TimeUnit.DAYS.toMillis(1)
 
     private val random = SecureRandom()
 
@@ -23,34 +28,6 @@ object Sessions : Table(), Loggable by WithLogging() {
 
     private fun SqlExpressionBuilder.expired(): Op<Boolean> =
             (Sessions.expiration neq -1L) and (Sessions.expiration lessEq System.currentTimeMillis())
-
-    /**
-     * Get the [Session] matching the given [id] and [shortUser] if it exists
-     */
-    operator fun get(id: String, shortUser: String): Session? = transaction {
-        if (select { matches(id, shortUser) and not(expired()) }.count() == 0) return@transaction null // no record found
-        val groups = UserGroups.select { UserGroups.shortUser eq shortUser }.map { it[UserGroups.groupName] }
-        log.trace("Groups for $shortUser: $groups")
-        val role = role(groups.toSet())
-        return@transaction Session(id, shortUser, role)
-    }
-
-    /**
-     * Create a new session for the provided user
-     */
-    fun create(user: User, expiresIn: Long): Session {
-        val session = Session(id = BigInteger(130, random).toString(32),
-                shortUser = user.shortUser,
-                role = role(user.groups.toSet()))
-        transaction {
-            insert {
-                it[id] = session.id
-                it[shortUser] = user.shortUser
-                it[expiration] = if (expiresIn <= 0L) -1L else System.currentTimeMillis() + expiresIn
-            }
-        }
-        return session
-    }
 
     private val elderGroups = arrayOf("520-Infopoint Admins")
     private val ctferGroups = arrayOf("520-CTF Members", "520-CTF Probationary Members")
@@ -74,13 +51,8 @@ object Sessions : Table(), Loggable by WithLogging() {
         else -> Session.NONE
     }
 
-    /**
-     * Deletes the session with the matching [id] and [shortUser]
-     * Returns true if an item was deleted, and false otherwise
-     */
-    fun delete(id: String, shortUser: String): Boolean = transaction {
-        val result = deleteIgnoreWhere { matches(id, shortUser) }
-        result != 0
+    operator fun get(id: String, shortUser: String): Session? = transaction {
+        SessionDb[id, shortUser]?.toJson()
     }
 
     fun deleteAll(shortUser: String): Int = transaction {
@@ -90,9 +62,32 @@ object Sessions : Table(), Loggable by WithLogging() {
     /**
      * Delete expired sessions
      */
-    fun sweep(): Int = transaction {
+    fun purge(): Int = transaction {
         deleteIgnoreWhere { expired() }
     }
 
+}
+
+class SessionDb(id: EntityID<String>) : Entity<String>(id) {
+    companion object : EntityClass<String, SessionDb>(Sessions) {
+
+        operator fun get(id: String, shortUser: String): SessionDb? = transaction {
+            findById(id)?.takeIf { it.shortUser.value == shortUser }
+        }
+
+    }
+
+    var shortUser by Sessions.shortUser
+    var user by UserDb referencedOn Sessions.shortUser
+    var expiration by Sessions.expiration
+    val role: String
+        get() = transaction {
+            Sessions.role(user.groups().map(GroupDb::groupName).toSet())
+        }
+
+
+    fun toJson(): Session = transaction {
+        Session(id.value, shortUser.value, role)
+    }
 }
 

@@ -42,25 +42,20 @@ interface McGillLdapContract {
     fun autoSuggest(like: String, auth: Pair<String, String>, limit: Int): List<User>
 
     /**
-<<<<<<< HEAD
      * Helper function to get the [Sam] type of the provided string
      */
     fun samType(sam: String): Sam
-}
-
-enum class Sam {
-    SHORT_USER, LONG_USER, STUDENT_ID, NONE
-=======
-     * Returns a nonnull ldap context if authentication is successful
-     * Note that the user must be a short user
-     */
-    fun bindLdap(auth: Pair<String, String>): LdapContext?
 
     /**
      * Returns a nonnull ldap context if authentication is successful
      */
     fun bindLdap(shortUser: String, password: String): LdapContext?
->>>>>>> origin/dev
+
+    fun bindLdap(auth: Pair<String, String>) = bindLdap(auth.first, auth.second)
+}
+
+enum class Sam {
+    SHORT_USER, LONG_USER, STUDENT_ID, NONE
 }
 
 object McGillLdap : McGillLdapContract, WithLogging() {
@@ -160,8 +155,6 @@ object McGillLdap : McGillLdapContract, WithLogging() {
         put("com.sun.jndi.ldap.read.timeout", "5000")
         put("com.sun.jndi.ldap.connect.timeout", "500")
     }
-
-    override fun bindLdap(auth: Pair<String, String>) = bindLdap(auth.first, auth.second)
 
     override fun bindLdap(shortUser: String, password: String): LdapContext? = try {
         val auth = createAuthMap(shortUser, password)

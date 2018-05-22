@@ -44,7 +44,7 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
             }
         }
 
-        fun new(user: User): UserDb = transaction {
+        fun newOrUpdate(user: User): UserDb = transaction {
             newOrUpdate(user.shortUser) {
                 longUser = user.longUser
                 userId = user.userId
@@ -70,11 +70,14 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
     var faculty by Users.faculty
     var activeSince by Users.activeSince
 
-<<<<<<< HEAD
-    //todo move to graphql
-    fun SqlExpressionBuilder.samMatcher(sam: String): Op<Boolean> =
-            (longUser eq sam) or (shortUser eq sam) or (id eq sam)
-=======
+    fun newSession(expiresIn: Long? = null) = transaction {
+        SessionDb.new {
+            user = this@UserDb
+            if (expiresIn != null)
+                expiration = System.currentTimeMillis() + expiresIn
+        }
+    }
+
     fun saveCourses(courses: List<Course>): UserDb = transaction {
         courses.forEach {
             CourseDb.newOrUpdate(it.name) {
@@ -84,7 +87,6 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
         }
         this@UserDb
     }
->>>>>>> origin/dev
 
     fun courses(semester: Semester) = transaction {
         CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns)
@@ -92,8 +94,9 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
                 .orderBy(Courses.year to SortOrder.DESC).orderBy(Courses.season to SortOrder.DESC))
     }
 
-    fun courses(take: Int) = transaction {
-        CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns).select { UserCourses.shortUser eq shortUser }.limit(take)
+    fun courses(take: Int = -1) = transaction {
+        CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns).select { UserCourses.shortUser eq shortUser }
+                .run { if (take > 0) limit(take) else this }
                 .orderBy(Courses.year to SortOrder.DESC).orderBy(Courses.season to SortOrder.DESC))
     }
 
@@ -104,9 +107,14 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
         this@UserDb
     }
 
-    fun groups(take: Int) = transaction {
-        GroupDb.wrapRows((UserGroups innerJoin Groups).slice(Groups.columns).select { UserGroups.shortUser eq shortUser }.limit(take)
+    fun groups(take: Int = -1) = transaction {
+        GroupDb.wrapRows((UserGroups innerJoin Groups).slice(Groups.columns).select { UserGroups.shortUser eq shortUser }
+                .run { if (take > 0) limit(take) else this }
                 .orderBy(Groups.groupName to SortOrder.ASC))
+    }
+
+    fun deleteSessions() = transaction {
+        Sessions.deleteAll(shortUser)
     }
 
 }

@@ -26,19 +26,12 @@ object KGraphDb : WithLogging() {
         listOf(it.singleQueryField(), it.listQueryField())
     }
 
-    fun start(configs: DbConfigs = Props) {
+    fun start(configs: DbConfigs) {
         log.info("Initializing")
         registration.clear()
-        if (configs.db.isEmpty())
-            throw RuntimeException("No db found; check config location")
         configs.connect()
-        transaction {
-            create(Sessions,
-                    Users,
-                    UserGroups, Groups,
-                    UserCourses, Courses)
-        }
-        if (Props.ldapEnabled)
+        McGillGraphQL.setup()
+        if (McGillGraphQL.ldapEnabled.get())
             Auth.deleteTestUser()
         log.info("Initialized")
     }
