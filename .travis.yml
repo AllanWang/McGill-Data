@@ -1,4 +1,8 @@
 language: java
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
 os: linux
 notifications:
   email: false
@@ -7,5 +11,5 @@ before_cache:
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
-    - $HOME/.gradle/caches/
+   - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
