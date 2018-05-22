@@ -84,7 +84,8 @@ subprojects {
         implementation kitDependency.kotlin
 
         testImplementation kitDependency.kotlinTest
-
+        testImplementation "org.junit.jupiter:junit-jupiter-api:$JUNIT"
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$JUNIT"
 //        if (it.name != 'test')
 
     }

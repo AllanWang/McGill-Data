@@ -11,7 +11,7 @@ class JsonTest {
 
     companion object {
 
-        private val mapper: ObjectMapper by lazy { jacksonObjectMapper() }
+        private val mapper: ObjectMapper by lazy(::jacksonObjectMapper)
 
         private inline fun <reified T : Any> T.passThroughJackson(): T =
                 mapper.treeToValue(mapper.valueToTree(this))
