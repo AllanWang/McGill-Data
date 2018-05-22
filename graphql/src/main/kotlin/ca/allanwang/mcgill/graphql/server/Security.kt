@@ -4,8 +4,6 @@ import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.graphql.Auth
 import ca.allanwang.mcgill.models.data.Session
 import graphql.servlet.GraphQLContext
-import graphql.servlet.GraphQLContextBuilder
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatus

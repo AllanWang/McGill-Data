@@ -101,7 +101,7 @@ public class Base64 {
     /**
      * Decode the Base64-encoded data in input and return the data in
      * a new byte array.
-     * <p>
+     *
      * <p>The padding '=' characters at the end are considered optional, but
      * if any are present, there must be the correct number of them.
      *
@@ -119,7 +119,7 @@ public class Base64 {
     /**
      * Decode the Base64-encoded data in input and return the data in
      * a new byte array.
-     * <p>
+     *
      * <p>The padding '=' characters at the end are considered optional, but
      * if any are present, there must be the correct number of them.
      *
@@ -136,7 +136,7 @@ public class Base64 {
     /**
      * Decode the Base64-encoded data in input and return the data in
      * a new byte array.
-     * <p>
+     *
      * <p>The padding '=' characters at the end are considered optional, but
      * if any are present, there must be the correct number of them.
      *

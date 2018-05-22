@@ -1,15 +1,10 @@
 package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.tables.*
 import ca.allanwang.mcgill.db.utils.DbConfigs
 import ca.allanwang.mcgill.graphql.*
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLOutputType
-import graphql.servlet.GraphQLContextBuilder
-import org.jetbrains.exposed.sql.SchemaUtils.create
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.springframework.context.annotation.Bean
 
 object KGraphDb : WithLogging() {
     private val registration: MutableMap<TableWiring, GraphQLOutputType> = mutableMapOf()

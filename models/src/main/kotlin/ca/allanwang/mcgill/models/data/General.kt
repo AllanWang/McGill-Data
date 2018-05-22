@@ -27,5 +27,5 @@ data class ErrorResponse(
 data class ChangeDelta(
         val id: String,
         val type: String,
-        val extras:List<String> = emptyList()
+        val extras: List<String> = emptyList()
 ) : McGillModel

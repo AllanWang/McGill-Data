@@ -28,15 +28,9 @@ class RestError(val error: ErrorResponse) : RuntimeException()
 inline fun fail(status: HttpStatus, message: String, extras: List<String> = emptyList()): Nothing =
         throw RestError(ErrorResponse(status.value(), message, extras))
 
-inline fun failBadRequest(message: String, extras: List<String> = emptyList()): Nothing
-        = fail(HttpStatus.BAD_REQUEST, message, extras)
-inline fun failUnauthorized(message: String, extras: List<String> = emptyList()): Nothing
-        = fail(HttpStatus.UNAUTHORIZED, message, extras)
-inline fun failForbidden(message: String, extras: List<String> = emptyList()): Nothing
-        = fail(HttpStatus.FORBIDDEN, message, extras)
-inline fun failNotFound(message: String, extras: List<String> = emptyList()): Nothing
-        = fail(HttpStatus.NOT_FOUND, message, extras)
-inline fun failTimeout(message: String, extras: List<String> = emptyList()): Nothing
-        = fail(HttpStatus.REQUEST_TIMEOUT, message, extras)
-inline fun failInternal(message: String, extras: List<String> = emptyList()): Nothing
-        = fail(HttpStatus.INTERNAL_SERVER_ERROR, message, extras)
+inline fun failBadRequest(message: String, extras: List<String> = emptyList()): Nothing = fail(HttpStatus.BAD_REQUEST, message, extras)
+inline fun failUnauthorized(message: String, extras: List<String> = emptyList()): Nothing = fail(HttpStatus.UNAUTHORIZED, message, extras)
+inline fun failForbidden(message: String, extras: List<String> = emptyList()): Nothing = fail(HttpStatus.FORBIDDEN, message, extras)
+inline fun failNotFound(message: String, extras: List<String> = emptyList()): Nothing = fail(HttpStatus.NOT_FOUND, message, extras)
+inline fun failTimeout(message: String, extras: List<String> = emptyList()): Nothing = fail(HttpStatus.REQUEST_TIMEOUT, message, extras)
+inline fun failInternal(message: String, extras: List<String> = emptyList()): Nothing = fail(HttpStatus.INTERNAL_SERVER_ERROR, message, extras)
