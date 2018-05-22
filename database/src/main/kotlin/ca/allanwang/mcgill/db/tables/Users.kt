@@ -73,7 +73,8 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
     var activeSince by Users.activeSince
 
     fun newSession(expiresIn: Long? = null) = transaction {
-        SessionDb.new(Sessions.newId()) {
+        println("New session for ${this@UserDb.id}")
+        SessionDb.new {
             user = this@UserDb
             if (expiresIn != null)
                 expiration = System.currentTimeMillis() + expiresIn

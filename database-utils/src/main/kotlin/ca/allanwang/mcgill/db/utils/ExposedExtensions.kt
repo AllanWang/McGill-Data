@@ -64,6 +64,5 @@ fun FieldSet.take(count: Int,
 
 fun <ID : Comparable<ID>, T : Entity<ID>> EntityClass<ID, T>.newOrUpdate(id: ID, update: T.() -> Unit): T {
     val existing = findById(id)
-    return if (existing != null) existing.apply(update)
-    else new(id, update)
+    return existing?.apply(update) ?: new(id, update)
 }
