@@ -50,7 +50,7 @@ data class User(
 
         private val shortUserRegex: Regex by lazy { Regex("[a-z]+[0-9]*") }
 
-        fun isShortUser(sam: String?):Boolean =
+        fun isShortUser(sam: String?): Boolean =
                 sam != null && shortUserRegex.matches(sam)
     }
 }

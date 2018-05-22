@@ -1,13 +1,15 @@
 package ca.allanwang.mcgill.graphql
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.tables.*
+import ca.allanwang.mcgill.db.tables.GroupDb
+import ca.allanwang.mcgill.db.tables.SessionDb
+import ca.allanwang.mcgill.db.tables.Sessions
+import ca.allanwang.mcgill.db.tables.UserDb
 import ca.allanwang.mcgill.ldap.McGillLdap
 import ca.allanwang.mcgill.ldap.Sam
 import ca.allanwang.mcgill.models.data.Group
 import ca.allanwang.mcgill.models.data.Session
 import ca.allanwang.mcgill.models.data.User
-import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Auth : WithLogging() {

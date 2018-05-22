@@ -8,6 +8,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$KOTLIN"
         classpath "org.jetbrains.kotlin:kotlin-allopen:$KOTLIN"
         classpath "org.springframework.boot:spring-boot-gradle-plugin:$SPRING_BOOT"
+        classpath "org.junit.platform:junit-platform-gradle-plugin:$JUNIT_PLATFORM"
     }
     wrapper.setDistributionType(Wrapper.DistributionType.ALL)
 }
@@ -32,15 +33,14 @@ dependencies {
     compile "ca.allanwang.kit:logger:$KIT"
     compile "ca.allanwang.kit:props:$KIT"
 
-    testCompile kitDependency.junit
     testCompile kitDependency.kotlinTest
 }
 
 subprojects {
-
     apply plugin: 'java'
     apply plugin: 'kotlin'
     apply plugin: 'maven'
+    apply plugin: 'org.junit.platform.gradle.plugin'
 
     group "ca.allanwang.mcgill"
     version VERSION
@@ -49,11 +49,6 @@ subprojects {
         maven { url "https://dl.bintray.com/kotlin/exposed" }
         maven { url "https://jitpack.io" }
         mavenCentral()
-    }
-
-    test {
-        dependsOn cleanTest
-        testLogging.showStandardStreams = true
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
@@ -73,6 +68,7 @@ subprojects {
 
     test {
         useJUnitPlatform()
+        dependsOn cleanTest
         testLogging {
             events "PASSED", "FAILED", "SKIPPED"
             showStandardStreams = true
@@ -84,7 +80,8 @@ subprojects {
         implementation kitDependency.kotlin
 
         testImplementation kitDependency.kotlinTest
-
+        testImplementation "org.junit.jupiter:junit-jupiter-api:$JUNIT"
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$JUNIT"
 //        if (it.name != 'test')
 
     }

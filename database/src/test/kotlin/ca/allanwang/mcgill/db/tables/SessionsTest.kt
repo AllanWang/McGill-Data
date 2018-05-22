@@ -3,7 +3,7 @@ package ca.allanwang.mcgill.db.tables
 import ca.allanwang.mcgill.db.test.withTables
 import ca.allanwang.mcgill.db.testUser
 import ca.allanwang.mcgill.models.data.Session
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull

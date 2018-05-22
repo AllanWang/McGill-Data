@@ -1,15 +1,11 @@
 package ca.allanwang.mcgill.graphql
 
-import ca.allanwang.kit.logger.LogUtils
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.graphql.db.KGraphDb
 import ca.allanwang.mcgill.graphql.server.SessionContext
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
-import graphql.servlet.GraphQLContext
 import graphql.servlet.GraphQLContextBuilder
-import org.apache.logging.log4j.Level
-import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
@@ -20,9 +16,7 @@ import org.springframework.web.servlet.DispatcherServlet
 
 
 fun main(args: Array<String>) {
-    if (Props.debug)
-        LogUtils.setLoggingLevel(LogManager.getLogger("LogUtils"), Level.TRACE)
-    KGraphDb.start()
+    KGraphDb.start(null) // todo add db configs?
     SpringApplication.run(ApplicationBootConfiguration::class.java, *args)
 }
 

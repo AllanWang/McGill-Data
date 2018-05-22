@@ -5,7 +5,7 @@ import ca.allanwang.mcgill.db.testUser
 import ca.allanwang.mcgill.models.data.Group
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.selectAll
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class UsersTest {

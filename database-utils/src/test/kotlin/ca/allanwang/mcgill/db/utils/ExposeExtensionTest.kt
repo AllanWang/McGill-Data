@@ -3,7 +3,7 @@ package ca.allanwang.mcgill.db.utils
 import ca.allanwang.mcgill.db.test.TestItemDb
 import ca.allanwang.mcgill.db.test.TestItems
 import ca.allanwang.mcgill.db.test.withTables
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class ExposeExtensionTest {

@@ -3,7 +3,7 @@ package ca.allanwang.mcgill.db.tables
 import ca.allanwang.mcgill.db.test.withTables
 import ca.allanwang.mcgill.models.data.Course
 import ca.allanwang.mcgill.models.data.Season
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class CoursesTest {
