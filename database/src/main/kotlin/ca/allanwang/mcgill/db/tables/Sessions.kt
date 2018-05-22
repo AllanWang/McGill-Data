@@ -24,12 +24,6 @@ object Sessions : IdTable<String>(), Loggable by WithLogging() {
     private val random = SecureRandom()
     fun newId() = BigInteger(130, random).toString(32)
 
-    private fun SqlExpressionBuilder.matches(id: String, shortUser: String): Op<Boolean> =
-            (Sessions.id eq id) and (Sessions.shortUser eq shortUser)
-
-    private fun SqlExpressionBuilder.expired(): Op<Boolean> =
-            (Sessions.expiration neq -1L) and (Sessions.expiration lessEq System.currentTimeMillis())
-
     private val elderGroups = arrayOf("520-Infopoint Admins")
     private val ctferGroups = arrayOf("520-CTF Members", "520-CTF Probationary Members")
     private val userGroups: Array<String>
@@ -69,11 +63,17 @@ object Sessions : IdTable<String>(), Loggable by WithLogging() {
 
 }
 
+private fun SqlExpressionBuilder.matches(id: String, shortUser: String): Op<Boolean> =
+        (Sessions.id eq id) and (Sessions.shortUser eq shortUser)
+
+private fun SqlExpressionBuilder.expired(): Op<Boolean> =
+        (Sessions.expiration neq -1L) and (Sessions.expiration lessEq System.currentTimeMillis())
+
 class SessionDb(id: EntityID<String>) : Entity<String>(id) {
     companion object : EntityClass<String, SessionDb>(Sessions) {
 
         operator fun get(id: String, shortUser: String): SessionDb? = transaction {
-            findById(id)?.takeIf { it.shortUser.value == shortUser }
+            find { matches(id, shortUser) and not(expired()) }.firstOrNull()
         }
 
     }

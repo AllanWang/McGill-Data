@@ -5,6 +5,8 @@ import ca.allanwang.mcgill.db.testUser
 import ca.allanwang.mcgill.models.data.Session
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class SessionsTest {
 
@@ -42,4 +44,16 @@ class SessionsTest {
         }
     }
 
+    @Test
+    fun query() {
+        withTables(Sessions, *Users.tableDependents()) {
+            val user1 = UserDb.newOrUpdate(testUser(1))
+            val session = user1.newSession() // expires in 1 ms
+            assertNotNull(Sessions[session.id.value, user1.shortUser], "Failed to query for session")
+            assertNull(Sessions[session.id.value, user1.shortUser.substring(1)], "Should not be able to query with incorrect shortUser")
+            assertNull(Sessions[session.id.value.substring(1), user1.shortUser], "Should not be able to query with incorrect session id")
+            session.expiration = 9000
+            assertNull(Sessions[session.id.value, user1.shortUser], "Should not be able to query expired session")
+        }
+    }
 }
