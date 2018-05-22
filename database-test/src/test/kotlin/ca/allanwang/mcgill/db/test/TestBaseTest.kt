@@ -1,6 +1,6 @@
 package ca.allanwang.mcgill.db.test
 
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class TestBaseTest {
