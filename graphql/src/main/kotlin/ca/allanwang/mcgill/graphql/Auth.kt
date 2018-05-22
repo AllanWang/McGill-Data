@@ -4,6 +4,7 @@ import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.tables.*
 import ca.allanwang.mcgill.ldap.McGillLdap
 import ca.allanwang.mcgill.ldap.Sam
+import ca.allanwang.mcgill.models.data.Group
 import ca.allanwang.mcgill.models.data.Session
 import ca.allanwang.mcgill.models.data.User
 import org.jetbrains.exposed.sql.deleteWhere
@@ -58,7 +59,7 @@ object Auth : WithLogging() {
                 lastName = "Test",
                 email = "unit.test@mail.mcgill.ca",
                 faculty = "Unit Test",
-                groups = listOf("Unit Test"))
+                groups = listOf(Group("Unit Test")))
 
         UserDb.newOrUpdate(testUser).newSession().toJson()
     }

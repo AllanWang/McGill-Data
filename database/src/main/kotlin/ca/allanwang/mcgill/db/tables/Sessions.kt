@@ -15,19 +15,14 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 object Sessions : IdTable<String>(), Loggable by WithLogging() {
-    override val id = varchar("id", 255).primaryKey().clientDefault { BigInteger(130, random).toString(32) }.entityId()
+    override val id = varchar("id", 255).primaryKey().clientDefault(this::newId).entityId()
     val shortUser = reference("short_user", Users, ReferenceOption.CASCADE)
     val expiration = long("expiration").clientDefault { System.currentTimeMillis() + defaultExpiresIn }
 
     val defaultExpiresIn: Long = TimeUnit.DAYS.toMillis(1)
 
     private val random = SecureRandom()
-
-    private fun SqlExpressionBuilder.matches(id: String, shortUser: String): Op<Boolean> =
-            (Sessions.id eq id) and (Sessions.shortUser eq shortUser)
-
-    private fun SqlExpressionBuilder.expired(): Op<Boolean> =
-            (Sessions.expiration neq -1L) and (Sessions.expiration lessEq System.currentTimeMillis())
+    fun newId() = BigInteger(130, random).toString(32)
 
     private val elderGroups = arrayOf("520-Infopoint Admins")
     private val ctferGroups = arrayOf("520-CTF Members", "520-CTF Probationary Members")
@@ -56,23 +51,29 @@ object Sessions : IdTable<String>(), Loggable by WithLogging() {
     }
 
     fun deleteAll(shortUser: String): Int = transaction {
-        deleteIgnoreWhere { Sessions.shortUser eq shortUser }
+        deleteWhere { Sessions.shortUser eq shortUser }
     }
 
     /**
      * Delete expired sessions
      */
     fun purge(): Int = transaction {
-        deleteIgnoreWhere { expired() }
+        deleteWhere { expired() }
     }
 
 }
+
+private fun SqlExpressionBuilder.matches(id: String, shortUser: String): Op<Boolean> =
+        (Sessions.id eq id) and (Sessions.shortUser eq shortUser)
+
+private fun SqlExpressionBuilder.expired(): Op<Boolean> =
+        (Sessions.expiration neq -1L) and (Sessions.expiration lessEq System.currentTimeMillis())
 
 class SessionDb(id: EntityID<String>) : Entity<String>(id) {
     companion object : EntityClass<String, SessionDb>(Sessions) {
 
         operator fun get(id: String, shortUser: String): SessionDb? = transaction {
-            findById(id)?.takeIf { it.shortUser.value == shortUser }
+            find { matches(id, shortUser) and not(expired()) }.firstOrNull()
         }
 
     }

@@ -82,7 +82,6 @@ subprojects {
 
     dependencies {
         implementation kitDependency.kotlin
-        implementation "ca.allanwang.kit:logger:$KIT"
 
         testImplementation kitDependency.kotlinTest
 

@@ -19,7 +19,7 @@ data class User(
         var lastName: String,
         var email: String,
         var faculty: String? = null,
-        var groups: List<String> = emptyList(),
+        var groups: List<Group> = emptyList(),
         var courses: List<Course> = emptyList(),
         var activeSince: Long = System.currentTimeMillis()
 ) : McGillModel {
