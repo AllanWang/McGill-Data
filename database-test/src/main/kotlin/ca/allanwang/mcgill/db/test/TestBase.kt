@@ -22,6 +22,10 @@ fun withTables(vararg tables: Table, log: Boolean = false, statement: Transactio
         try {
             statement()
             commit()
+        } catch (e: Exception) {
+            System.err.println("\n************************** Transaction Failed **************************")
+            e.printStackTrace()
+            System.err.println("************************************************************************\n")
         } finally {
             SchemaUtils.drop(*tables)
             commit()

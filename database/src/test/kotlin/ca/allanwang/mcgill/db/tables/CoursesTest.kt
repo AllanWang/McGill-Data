@@ -6,7 +6,7 @@ import ca.allanwang.mcgill.models.data.Season
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class CourseTest {
+class CoursesTest {
 
     @Test
     fun `creation and json`() {
