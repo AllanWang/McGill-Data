@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 class CourseTest {
 
     @Test
-    fun creation() {
+    fun `creation and json`() {
         withTables(Courses) {
             val course = CourseDb.new("comp202") {
                 season = Season.FALL

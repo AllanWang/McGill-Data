@@ -25,7 +25,7 @@ class LdapTest {
         log.info(user!!)
         assertEquals("Ctf Science", user.displayName)
         assertEquals(CSCIEN2, user.shortUser)
-        assertTrue(user.groups.contains("520-Resource Accounts"))
+        assertTrue(user.groups.any { it.name == "520-Resource Accounts" })
         log.info(user)
     }
 

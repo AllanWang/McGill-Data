@@ -1,4 +1,4 @@
 dependencies {
     compile project(':models')
-    testCompile "ca.allanwang.kit:props:$KIT"
+    testCompile "ca.allanwang.kit:logger:$KIT"
 }

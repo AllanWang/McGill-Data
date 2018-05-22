@@ -29,6 +29,8 @@ object Users : IdTable<String>() {
     val email = varchar("email", 64)
     val faculty = varchar("faculty", 32).nullable()
     val activeSince = long("active_since")
+
+    fun tableDependents() = arrayOf(Users, UserGroups, Groups, UserCourses, Courses)
 }
 
 class UserDb(id: EntityID<String>) : Entity<String>(id) {
@@ -55,7 +57,7 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
                 email = user.email
                 faculty = user.faculty
                 activeSince = user.activeSince
-            }.saveCourses(user.courses)
+            }.saveGroups(user.groups).saveCourses(user.courses)
         }
     }
 
@@ -115,6 +117,20 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
 
     fun deleteSessions() = transaction {
         Sessions.deleteAll(shortUser)
+    }
+
+    fun toJson(): User = transaction {
+        User(shortUser = shortUser,
+                userId = userId,
+                longUser = longUser,
+                displayName = displayName,
+                givenName = givenName,
+                middleName = middleName,
+                lastName = lastName,
+                email = email,
+                faculty = faculty,
+                groups = groups().map(GroupDb::toJson), courses = courses().map(CourseDb::toJson),
+                activeSince = activeSince)
     }
 
 }
