@@ -1,17 +1,30 @@
 package ca.allanwang.mcgill.graphql
 
+import ca.allanwang.kit.logger.LogUtils
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.graphql.db.KGraphDb
+import ca.allanwang.mcgill.graphql.server.SessionContext
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
-import graphql.schema.idl.RuntimeWiring
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeDefinitionRegistry
+import graphql.servlet.GraphQLContext
+import graphql.servlet.GraphQLContextBuilder
+import org.apache.logging.log4j.Level
+import org.apache.logging.log4j.LogManager
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
-import java.io.File
+import org.springframework.web.servlet.DispatcherServlet
 
+
+fun main(args: Array<String>) {
+    if (Props.debug)
+        LogUtils.setLoggingLevel(LogManager.getLogger("LogUtils"), Level.TRACE)
+    KGraphDb.start()
+    SpringApplication.run(ApplicationBootConfiguration::class.java, *args)
+}
 
 @SpringBootApplication
 class ApplicationBootConfiguration : WithLogging("McGill GraphQL") {
@@ -22,54 +35,21 @@ class ApplicationBootConfiguration : WithLogging("McGill GraphQL") {
                 .query(GraphQLObjectType.newObject()
                         .name("query")
                         .fields(KGraphDb.dbFields())
-//                        .field { field ->
-//                            field
-//                                    .name("test")
-//                                    .type(Scalars.GraphQLString)
-//                                    .dataFetcher { environment -> "response" }
-//                        }
                         .build())
                 .build()
     }
 
+    @Autowired
+    private lateinit var servlet: DispatcherServlet
 
-//    @Bean
-//    fun schema(): GraphQLSchema =
-//            SchemaGenerator().makeExecutableSchema(loadSchema("ldap.graphqls"), buildRuntimeWiring())
-
-    private fun buildRuntimeWiring(): RuntimeWiring = RuntimeWiring.newRuntimeWiring()
-            .type("QueryType") {
-                it.apply { queryBuilder() }
-            }
-            .build()
-
-    private fun loadSchema(vararg name: String): TypeDefinitionRegistry {
-        val files = name.mapNotNull {
-            File(this::class.java.classLoader.getResource(it)?.file ?: return@mapNotNull null)
-        }.filter(File::isFile)
-        if (files.size < name.size) {
-            if (files.isEmpty())
-                log.error("No schema models loaded")
-            else
-                log.error("Some schema models are not valid files")
-        }
-        val parser = SchemaParser()
-        val registry = TypeDefinitionRegistry()
-        files.forEach { registry.merge(parser.parse(it)) }
-        return registry
+    @Bean
+    fun getCommandLineRunner(context: ApplicationContext): CommandLineRunner {
+        servlet.setThrowExceptionIfNoHandlerFound(true)
+        log.info("CommandLineRunner")
+        return CommandLineRunner { }
     }
 
-//            querySchema {
-//                string("hello", "Basic static response") {
-//                    "world"
-//                }
-//                string("echo", "Repeat") {
-//                    it.arguments.keys.joinToString()
-//                }
-//            }
-}
+    @Bean
+    fun context(): GraphQLContextBuilder = GraphQLContextBuilder(::SessionContext)
 
-fun main(args: Array<String>) {
-    KGraphDb.start()
-    SpringApplication.run(ApplicationBootConfiguration::class.java, *args)
 }

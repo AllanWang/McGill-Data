@@ -2,26 +2,18 @@ package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.utils.toCamel
-import ca.allanwang.mcgill.db.tables.Users
 import ca.allanwang.mcgill.graphql.kotlin.graphQLArgument
 import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
 import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
+import ca.allanwang.mcgill.graphql.server.SessionContext
+import ca.allanwang.mcgill.models.data.Session
+import graphql.GraphQLException
 import graphql.Scalars
 import graphql.language.Field
 import graphql.schema.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
-
-object UserWiring : TableWiring(Users,
-        singleQueryArgs = argDefinitions(Users.shortUser,
-                Users.longUser,
-                Users.id),
-        listQueryArgs = argDefinitions(Users.shortUser,
-                Users.longUser,
-                Users.id,
-                Users.email,
-                Users.faculty))
 
 /**
  * Generic wiring for SQL tables
@@ -118,11 +110,17 @@ abstract class TableWiring(private val table: Table,
      */
     private val columnMap: Map<String, Column<*>> = table.columns.map { it.name.toCamel() to it }.toMap()
 
+    private val DataFetchingEnvironment.session: Session
+        get() = (getContext<Any?>() as? SessionContext)?.session ?: throw GraphQLException("Not authorized")
+
     fun singleQueryField() = graphQLFieldDefinition {
         name(name)
         argument(singleQueryArgs)
         type(KGraphDb.getObjectType(this@TableWiring))
-        dataFetcher { fetch(it).firstOrNull() }
+        dataFetcher {
+            println("Fetching ${it.session}")
+            fetch(it).firstOrNull()
+        }
     }
 
     fun listQueryField() = graphQLFieldDefinition {
@@ -136,24 +134,26 @@ abstract class TableWiring(private val table: Table,
     fun objectType() = graphQLObjectType {
         name(tableName)
         description("SQL access to $tableName")
-        fields(table.columns.map { fieldDefinition(it) })
+        fields(table.columns.map { fieldDefinition(GraphColumn(it)) })
     }
 
 
     companion object {
 
-        fun argDefinitions(vararg column: Column<*>) = column.map(this::argDefinition)
+        fun argDefinitions(vararg columns: Column<*>) = columns.map { argDefinition(GraphColumn(it)) }
 
-        fun argDefinition(column: Column<*>) = graphQLArgument {
-            name(column.name.toCamel())
-            description("Query for exact match with ${column.name}")
-            type(graphQLType(column) as GraphQLInputType)
+        fun argDefinitions(vararg graphCol: GraphColumn) = graphCol.map(this::argDefinition)
+
+        fun argDefinition(graphCol: GraphColumn) = graphQLArgument {
+            name(graphCol.name)
+            description("Query for exact match with ${graphCol.columnName}")
+            type(graphQLType(graphCol.column) as GraphQLInputType)
         }
 
-        fun fieldDefinition(column: Column<*>) = graphQLFieldDefinition {
-            name(column.name.toCamel())
-            val type = graphQLType(column) as GraphQLOutputType
-            type(if (!column.columnType.nullable) GraphQLNonNull(type) else type)
+        fun fieldDefinition(graphCol: GraphColumn) = graphQLFieldDefinition {
+            name(graphCol.name)
+            val type = graphQLType(graphCol.column) as GraphQLOutputType
+            type(if (!graphCol.nullable) GraphQLNonNull(type) else type)
         }
 
         /**
