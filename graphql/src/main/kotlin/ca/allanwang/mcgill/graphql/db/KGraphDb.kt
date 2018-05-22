@@ -26,10 +26,10 @@ object KGraphDb : WithLogging() {
         listOf(it.singleQueryField(), it.listQueryField())
     }
 
-    fun start(configs: DbConfigs) {
+    fun start(configs: DbConfigs?) {
         log.info("Initializing")
         registration.clear()
-        configs.connect()
+        configs?.connect()
         McGillGraphQL.setup()
         if (McGillGraphQL.ldapEnabled.get())
             Auth.deleteTestUser()

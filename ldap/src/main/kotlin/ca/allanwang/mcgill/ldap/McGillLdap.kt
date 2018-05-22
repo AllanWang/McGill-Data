@@ -1,10 +1,7 @@
 package ca.allanwang.mcgill.ldap
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.models.data.Course
-import ca.allanwang.mcgill.models.data.Season
-import ca.allanwang.mcgill.models.data.Semester
-import ca.allanwang.mcgill.models.data.User
+import ca.allanwang.mcgill.models.data.*
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -230,13 +227,13 @@ object McGillLdap : McGillLdapContract, WithLogging() {
             }
         }
 
-        val groups = mutableListOf<String>()
+        val groups = mutableListOf<Group>()
 
         val courses = mutableListOf<Course>()
 
         members?.forEach { (name, semester) ->
             if (name == null) return@forEach
-            if (semester == null) groups.add(name)
+            if (semester == null) groups.add(Group(name))
             else {
                 val crn = name.substringBefore(":").trim()
                 val desc = name.substringAfter(":").trim()

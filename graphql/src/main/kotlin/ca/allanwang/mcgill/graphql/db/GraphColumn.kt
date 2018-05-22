@@ -1,6 +1,6 @@
 package ca.allanwang.mcgill.graphql.db
 
-import ca.allanwang.mcgill.db.bindings.toCamel
+import ca.allanwang.mcgill.db.utils.toCamel
 import org.jetbrains.exposed.sql.Column
 
 /**

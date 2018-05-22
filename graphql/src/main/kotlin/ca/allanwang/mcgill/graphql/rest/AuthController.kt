@@ -2,7 +2,6 @@ package ca.allanwang.mcgill.graphql.rest
 
 import ca.allanwang.mcgill.graphql.Auth
 import ca.allanwang.mcgill.graphql.McGillGraphQL
-import ca.allanwang.mcgill.graphql.Props
 import ca.allanwang.mcgill.graphql.server.SessionResolver
 import ca.allanwang.mcgill.graphql.server.failNotFound
 import ca.allanwang.mcgill.models.data.Session
