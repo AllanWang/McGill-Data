@@ -22,7 +22,7 @@ object UserWiring : TableWiring<Users>(Users) {
             singleArgDefinitions(shortUser, longUser, userId)
 
     override fun Users.listQueryArgs(): List<GraphDbArg> =
-            listArgDefinitions(shortUser, longUser, userId, email, faculty)
+            listArgDefinitions(shortUser, longUser, userId, email, faculty) + limit
 }
 
 object GroupWiring : TableWiring<Groups>(Groups) {
@@ -38,5 +38,5 @@ object CourseWiring : TableWiring<Courses>(Courses) {
             singleArgDefinitions(courseName)
 
     override fun Courses.listQueryArgs(): List<GraphDbArg> =
-            listArgDefinitions(courseName, season, teacher, year)
+            listArgDefinitions(courseName, season, teacher, year) + limit
 }
