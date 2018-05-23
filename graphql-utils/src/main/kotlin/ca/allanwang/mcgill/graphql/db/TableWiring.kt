@@ -190,7 +190,8 @@ abstract class TableWiring<T : Table>(val table: T) : WithLogging("TableWiring $
             println("Enum $name")
             return GraphQLEnumType.Builder()
                     .name(name)
-                    .definition(EnumTypeDefinition(name, klass.enumConstants.map(Any::toString).map { EnumValueDefinition(it) }, emptyList()))
+                    .definition(EnumTypeDefinition(name))
+//                            , klass.enumConstants.map(Any::toString).map { EnumValueDefinition(it) }, emptyList()))
                     .build()
         }
     }

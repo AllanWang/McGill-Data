@@ -37,18 +37,13 @@ class AuthenticationFilter : GenericFilterBean() {
         get() = logger
 
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
-        val httpRequest = request as? HttpServletRequest ?: return log.trace("Aborting non http request")
         try {
-            log.info("p ${request.pathTranslated} c ${request.contextPath} s ${request.servletPath}")
+            val httpRequest = request as? HttpServletRequest ?: return log.trace("Aborting non http request")
+            log.info("path ${request.servletPath}") // todo, check if we should reject graphiql if no session found
             val authorization = httpRequest.getHeader(AUTHORIZATION_PROPERTY) ?: return
             val session = getSession(authorization) ?: return
-
             log.info("Hello $session")
-            println("HHH $session ${request.pathInfo} ${request.pathTranslated} ${request.contextPath} ${request.servletPath}")
             httpRequest.setAttribute(SESSION, session)
-            (response as HttpServletResponse).sendError(404, "Test")
-        } catch (e: Exception) {
-            log.error("Authentication Error", e)
         } finally {
             chain.doFilter(request, response)
         }
@@ -59,7 +54,6 @@ class AuthenticationFilter : GenericFilterBean() {
         if (parts.size != 2)
             return null
         val (authScheme, credentials) = parts
-        log.info("Auth $authScheme, $credentials")
         when (authScheme) {
             TOKEN -> {
                 val samAndToken = Session.decodeHeader(credentials)?.split(":")
