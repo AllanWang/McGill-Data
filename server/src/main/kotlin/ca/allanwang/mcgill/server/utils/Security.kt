@@ -1,8 +1,8 @@
 package ca.allanwang.mcgill.server.utils
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.server.Auth
 import ca.allanwang.mcgill.models.data.Session
+import ca.allanwang.mcgill.server.Auth
 import graphql.servlet.GraphQLContext
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
@@ -94,10 +94,6 @@ class AuthenticationFilter : GenericFilterBean() {
 
 class SessionContext(request: Optional<HttpServletRequest>,
                      response: Optional<HttpServletResponse>) : GraphQLContext(request, response) {
-
-    init {
-        println("Session context")
-    }
 
     val session: Session? by lazy {
         if (!request.isPresent) return@lazy null

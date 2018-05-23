@@ -15,6 +15,7 @@ dependencies {
 
     compile "com.graphql-java:graphql-spring-boot-starter:4.0.0"
     compile "com.graphql-java:graphiql-spring-boot-starter:4.0.0"
+    compile "org.postgresql:postgresql:$POSTGRESQL"
 
     compile project(":ldap")
     compile project(":database")

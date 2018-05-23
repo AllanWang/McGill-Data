@@ -1,11 +1,11 @@
 package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.utils.toCamel
-import ca.allanwang.mcgill.graphql.kotlin.graphQLArgument
 import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
 import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
 import graphql.Scalars
+import graphql.language.EnumTypeDefinition
+import graphql.language.EnumValueDefinition
 import graphql.language.Field
 import graphql.schema.*
 import org.jetbrains.exposed.sql.*
@@ -15,58 +15,115 @@ import org.jetbrains.exposed.sql.transactions.transaction
 /**
  * Generic wiring for SQL tables
  */
-abstract class TableWiring(private val table: Table,
-                           name: String = table.tableName,
-                           limit: (DataFetchingEnvironment.() -> Int)? = null,
-                           where: (DataFetchingEnvironment.() -> Op<Boolean>)? = null,
-                           private val singleQueryArgs: List<GraphQLArgument> = emptyList(),
-                           private val listQueryArgs: List<GraphQLArgument> = emptyList(),
-                           /**
-                            * Enable to allow queries without arguments
-                            */
-                           private val allowSelectAll: Boolean = singleQueryArgs.isEmpty() || listQueryArgs.isEmpty()
-) : WithLogging("TableWiring ${table.tableName}") {
+abstract class TableWiring<T : Table>(val table: T) : WithLogging("TableWiring ${table.tableName}") {
+
+    inline val tableName
+        get() = table.tableName
+    /**
+     * Base name to be used for single result queries
+     * By convention, [Table] names should end with an s
+     * Set to null to disable single result queries
+     */
+    protected open val singleFieldName: String? = tableName.toLowerCase().trimEnd('s')
+    /**
+     * Base name to be used for list result queries
+     * Set to null to disable
+     */
+    protected open val listFieldName: String? = tableName
+
+    open fun T.includedColumns(): List<Column<*>> = emptyList()
+    open fun T.excludedColumns(): List<Column<*>> = emptyList()
+    open fun T.singleQueryArgs(): List<GraphDbArg> = emptyList()
+    open fun T.listQueryArgs(): List<GraphDbArg> = listOf(limit)
 
     /**
-     * Base name to be used for queries
-     * By convention, [Table] names should end with an s
+     * Maps the graphQL field to the associated column
      */
-    private val name = name.toLowerCase().trimEnd('s')
-    val tableName = table.tableName
-    private val limit: DataFetchingEnvironment.() -> Int = limit ?: { defaultLimit() }
-    private val where: DataFetchingEnvironment.() -> Op<Boolean>? = where ?: { defaultWhere() }
+    private val fieldMap: Map<String, GraphDbField> by lazy {
+        val includedColumns = table.includedColumns()
+        val columns = (if (includedColumns.isEmpty()) table.columns else includedColumns) - table.excludedColumns()
+        log.info("Creating field map of $columns")
+        columns.map { table.columnToField(it) }.map { it.name to it }.toMap()
+    }
+
+    private val columnMap: Map<Column<*>, GraphDbField> by lazy {
+        fieldMap.values.map { it.column to it }.toMap()
+    }
+
+    private val Column<*>.fieldName
+        get() = columnMap[this]?.name ?: name
+
+    private val singleQueryArgMap: Map<String, GraphDbArg> by lazy {
+        table.singleQueryArgs().map { it.name to it }.toMap()
+    }
+
+    private val listQueryArgMap: Map<String, GraphDbArg> by lazy {
+        table.listQueryArgs().map { it.name to it }.toMap()
+    }
+
+    fun fields(container: GraphQLWiring): List<GraphQLFieldDefinition> {
+        val list = mutableListOf<GraphQLFieldDefinition>()
+        if (singleFieldName != null)
+            list.add(graphQLFieldDefinition {
+                name(singleFieldName)
+                argument(singleQueryArgMap.values.map { it.graphQLArg() })
+                type(container.type(this@TableWiring))
+            })
+        if (listFieldName != null)
+            list.add(graphQLFieldDefinition {
+                name(listFieldName)
+                argument(listQueryArgMap.values.map { it.graphQLArg() })
+                type(container.type(this@TableWiring))
+            })
+        return list
+    }
+
+    val graphQLArguments
+        get() = singleQueryArgMap.values + listQueryArgMap.values
+
+    open fun T.columnToField(column: Column<*>): GraphDbField = GraphDbField(column)
 
     /**
      * Attempt to fetch sql data with the given environments
      */
-    fun fetch(env: DataFetchingEnvironment): List<Map<String, Any?>> = env.run {
-        transaction {
-            select(where(), limit(), dbFields())
+    fun fetch(env: DataFetchingEnvironment) = env.fetchDbData()
+
+    /**
+     * Fetches data
+     * Returns null if invalid
+     * Returns map if single selection
+     * Returns list of maps if list selection
+     * All outputs should be properly serializable
+     */
+    private fun DataFetchingEnvironment.fetchDbData(): Any? {
+        val fields = dbFields()
+        if (fields.isEmpty()) return null
+        val columns = fields.mapNotNull { fieldMap[it]?.column }
+        var condition: Op<Boolean>? = null
+        val extensions = mutableListOf<Query.() -> Query>()
+        val single = fieldType !is GraphQLList
+        println("Query single $single")
+        arguments.entries.forEach { (key, query) ->
+            if (query == null) return@forEach
+            val arg = (if (single) singleQueryArgMap else listQueryArgMap)[key] ?: return@forEach
+            when (arg) {
+                is GraphDbConditionArg -> {
+                    val op = arg.where(query)
+                    condition = if (condition == null) op else condition!! and op
+                }
+                is GraphDbExtensionArg -> extensions.add({ arg.modifier(this, query.toString()) })
+            }
+        }
+        if (condition == null) {
+            // todo reject if conditionless not allowed
+        }
+        return transaction {
+            val selection = table.run { if (condition == null) selectAll() else select(condition!!) }
+            val statement = extensions.fold(selection) { base, extension -> base.extension() }
+            if (single) statement.firstOrNull()?.toMap(columns)
+            else statement.map { row -> row.toMap(columns) }
         }
     }
-
-    /*
-     * ---------------------------------------
-     * Environment Helpers
-     * ---------------------------------------
-     */
-
-    private fun DataFetchingEnvironment.defaultLimit(): Int {
-        if (fieldType !is GraphQLList) return 1
-        return 20
-    }
-
-    private fun DataFetchingEnvironment.defaultWhere(): Op<Boolean>? =
-            arguments.entries.fold<MutableMap.MutableEntry<String, Any?>, Op<Boolean>?>(null) { op, (key, query) ->
-                val col = columnMap[key] ?: return@fold op
-                query ?: return@fold op
-                val condition = EqOp(col, QueryParameter(query, col.columnType))
-                if (op != null)
-                    op and condition
-                else
-                    condition
-            }
-
 
     private fun DataFetchingEnvironment.dbFields(): List<String> {
         val selections = fields.firstOrNull { it.name == fieldDefinition.name }
@@ -74,80 +131,34 @@ abstract class TableWiring(private val table: Table,
         log.info("Selections $selections")
         val (valid, invalid) = selections
                 .mapNotNull { (it as? Field)?.name }
-                .partition { it in columnMap }
+                .partition { it in fieldMap }
         if (invalid.isNotEmpty())
             log.warn("Invalid fields found within $tableName query: $invalid")
         log.info("Valid $valid")
         return valid
     }
 
-    /**
-     * Directly query the [table] with the provided [fields] and [where] condition
-     */
-    private fun select(where: Op<Boolean>?, limit: Int = 20, fields: Collection<String>): List<Map<String, Any?>> {
-        if (where == null && !allowSelectAll)
-            return emptyList()
-        if (fields.isEmpty()) {
-            log.warn("Attempting to query without field selection")
-            return emptyList()
-        }
-        val query = if (where != null) table.select(where) else table.selectAll()
-        if (limit > 0)
-            query.limit(limit)
-        return query.map {
-            it.toData(fields)
-        }
-    }
-
-    private fun ResultRow.toData(fields: Collection<String>): Map<String, Any?> =
-            fields.map { it to this[columnMap[it]!!] }.toMap()
-
-    /**
-     * Maps the graphQL field to the associated column
-     */
-    private val columnMap: Map<String, Column<*>> = table.columns.map { it.name.toCamel() to it }.toMap()
-
-    fun singleQueryField() = graphQLFieldDefinition {
-        name(name)
-        argument(singleQueryArgs)
-        type(objectType())
-        dataFetcher {
-            fetch(it).firstOrNull()
-        }
-    }
-
-    fun listQueryField() = graphQLFieldDefinition {
-        name("${name}s")
-        argument(listQueryArgs)
-        type(GraphQLList(objectType()))
-        dataFetcher { fetch(it) }
-    }
+    private fun ResultRow.toMap(columns: List<Column<*>>): Map<String, Any?> =
+            columns.map { it.fieldName to this[it] }.toMap()
 
 
-    fun objectType() = graphQLObjectType {
+    internal fun objectTypeFactory() = graphQLObjectType {
         name(tableName)
         description("SQL access to $tableName")
-        fields(table.columns.map { fieldDefinition(GraphColumn(it)) })
+        fields(fieldMap.values.map { it.graphQLField() })
     }
 
+    fun singleArgDefinitions(vararg columns: Column<*>) = columns.map {
+        GraphDbConditionArg(it.fieldName, it)
+    }
+
+    fun listArgDefinitions(vararg columns: Column<*>) = columns.map {
+        GraphDbConditionArg("${it.fieldName}s", it)
+    }
 
     companion object {
 
-        fun argDefinitions(vararg columns: Column<*>) = columns.map { argDefinition(GraphColumn(it)) }
-
-        fun argDefinitions(vararg graphCol: GraphColumn) = graphCol.map(this::argDefinition)
-
-        fun argDefinition(graphCol: GraphColumn) = graphQLArgument {
-            name(graphCol.name)
-            description("Query for exact match with ${graphCol.columnName}")
-            type(graphQLType(graphCol.column) as GraphQLInputType)
-        }
-
-        fun fieldDefinition(graphCol: GraphColumn) = graphQLFieldDefinition {
-            name(graphCol.name)
-            val type = graphQLType(graphCol.column) as GraphQLOutputType
-            type(if (!graphCol.nullable) GraphQLNonNull(type) else type)
-        }
+        val limit = GraphDbExtensionArg("limit", Scalars.GraphQLInt, { limit(it.toInt()) }, "Upper limit for number of items to retrieve")
 
         /**
          * Get the column typing
@@ -155,18 +166,30 @@ abstract class TableWiring(private val table: Table,
          * [GraphQLOutputType] are already registered when the wiring is registered
          * todo Make sure that any [GraphQLInputType] is also registered in the process
          */
-        private fun graphQLType(column: Column<*>): GraphQLType {
+        fun graphQLType(column: Column<*>): GraphQLType {
             column.referee?.apply {
                 return GraphQLTypeReference(this.table.tableName)
             }
-
-            return when (column.columnType) {
+            val type = column.columnType
+            val graphQLType = when (type) {
                 is IntegerColumnType -> Scalars.GraphQLInt
                 is LongColumnType -> Scalars.GraphQLLong
                 is DecimalColumnType -> Scalars.GraphQLFloat
                 is StringColumnType -> Scalars.GraphQLString
-                else -> throw RuntimeException("Unknown type ${column.columnType.sqlType()}")
+                is EntityIDColumnType<*> -> return graphQLType(type.idColumn)
+                is EnumerationColumnType<*> -> scalarType(type.klass)
+                else -> throw RuntimeException("Unknown type ${type::class.java}: ${type.sqlType()}")
             }
+            return if (column.columnType.nullable) graphQLType else GraphQLNonNull(graphQLType)
+        }
+
+        fun scalarType(klass: Class<out Enum<*>>): GraphQLEnumType {
+            val name = klass.simpleName
+            println("Enum $name")
+            return GraphQLEnumType.Builder()
+                    .name(name)
+                    .definition(EnumTypeDefinition(name, klass.enumConstants.map(Any::toString).map { EnumValueDefinition(it) }, emptyList()))
+                    .build()
         }
     }
 

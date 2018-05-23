@@ -11,6 +11,7 @@ interface DbConfigs {
 
     fun connect() {
         if (db.isEmpty()) throw RuntimeException("No db value found in configs")
+        if (dbDriver.isEmpty()) throw RuntimeException("No db driver value found in configs")
         val log = LogManager.getLogger("DbConfigs")
         log.info("Connecting to $db with $dbUser")
         Database.connect(url = db,
