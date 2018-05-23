@@ -1,4 +1,4 @@
-package ca.allanwang.mcgill.graphql
+package ca.allanwang.mcgill.server
 
 import ca.allanwang.mcgill.db.McGillDb
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -13,7 +13,7 @@ object McGillGraphQL {
 
     fun setup() {
         McGillDb.setup()
-        if (McGillGraphQL.ldapEnabled.get())
+        if (ldapEnabled.get())
             transaction { Auth.deleteTestUser() }
     }
 }

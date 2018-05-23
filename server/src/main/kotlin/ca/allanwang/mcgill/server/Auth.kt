@@ -1,4 +1,4 @@
-package ca.allanwang.mcgill.graphql
+package ca.allanwang.mcgill.server
 
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.tables.GroupDb

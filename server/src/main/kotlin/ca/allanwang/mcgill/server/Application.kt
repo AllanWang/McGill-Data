@@ -1,8 +1,8 @@
-package ca.allanwang.mcgill.graphql
+package ca.allanwang.mcgill.server
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.graphql.db.KGraphDb
-import ca.allanwang.mcgill.graphql.server.SessionContext
+import ca.allanwang.mcgill.server.db.KGraphDb
+import ca.allanwang.mcgill.server.utils.SessionContext
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.servlet.GraphQLContextBuilder

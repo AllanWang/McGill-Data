@@ -15,4 +15,5 @@ class GraphColumn(val name: String, val column: Column<*>) {
 
     val nullable: Boolean
         get() = column.columnType.nullable
+
 }

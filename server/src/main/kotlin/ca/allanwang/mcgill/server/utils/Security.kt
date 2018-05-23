@@ -1,7 +1,7 @@
-package ca.allanwang.mcgill.graphql.server
+package ca.allanwang.mcgill.server.utils
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.graphql.Auth
+import ca.allanwang.mcgill.server.Auth
 import ca.allanwang.mcgill.models.data.Session
 import graphql.servlet.GraphQLContext
 import org.springframework.context.annotation.Configuration
@@ -22,24 +22,6 @@ import javax.servlet.ServletResponse
 import javax.servlet.annotation.WebFilter
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-
-
-//@Configuration
-//@EnableWebSecurity
-//class SecurityConfig : WebSecurityConfigurerAdapter(), Loggable by WithLogging("SecurityConfig") {
-//
-//    /**
-//     * Note that we handle authentication lazily.
-//     * We will bind a filter to check for authentication and attach a session if it exists
-//     * However, all endpoints will go through unless they explicitly request a session (by having one in the method argument)
-//     * and cannot get it from the request attributes
-//     */
-//    override fun configure(http: HttpSecurity) {
-//        http.addFilterBefore(AuthenticationFilter(), BasicAuthenticationFilter::class.java)
-//                .authorizeRequests().antMatchers("**").anyRequest()
-//    }
-//
-//}
 
 private const val AUTHORIZATION_PROPERTY = "Authorization"
 private const val BASIC = "Basic"
