@@ -68,12 +68,14 @@ abstract class TableWiring<T : Table>(val table: T) : WithLogging("TableWiring $
                 name(singleFieldName)
                 argument(singleQueryArgMap.values.map { it.graphQLArg() })
                 type(container.type(this@TableWiring))
+                dataFetcher { it.fetchDbData() }
             })
         if (listFieldName != null)
             list.add(graphQLFieldDefinition {
                 name(listFieldName)
                 argument(listQueryArgMap.values.map { it.graphQLArg() })
-                type(container.type(this@TableWiring))
+                type(GraphQLList(container.type(this@TableWiring)))
+                dataFetcher { it.fetchDbData() }
             })
         return list
     }
