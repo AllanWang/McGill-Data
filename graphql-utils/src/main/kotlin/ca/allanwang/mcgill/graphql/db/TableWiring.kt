@@ -5,7 +5,6 @@ import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
 import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
 import graphql.Scalars
 import graphql.language.EnumTypeDefinition
-import graphql.language.EnumValueDefinition
 import graphql.language.Field
 import graphql.schema.*
 import org.jetbrains.exposed.sql.*
@@ -131,13 +130,7 @@ abstract class TableWiring<T : Table>(val table: T) : WithLogging("TableWiring $
         val selections = fields.firstOrNull { it.name == fieldDefinition.name }
                 ?.selectionSet?.selections ?: return emptyList()
         log.info("Selections $selections")
-        val (valid, invalid) = selections
-                .mapNotNull { (it as? Field)?.name }
-                .partition { it in fieldMap }
-        if (invalid.isNotEmpty())
-            log.warn("Invalid fields found within $tableName query: $invalid")
-        log.info("Valid $valid")
-        return valid
+        return selections.mapNotNull { (it as? Field)?.name }
     }
 
     private fun ResultRow.toMap(columns: List<Column<*>>): Map<String, Any?> =
@@ -168,12 +161,12 @@ abstract class TableWiring<T : Table>(val table: T) : WithLogging("TableWiring $
          * [GraphQLOutputType] are already registered when the wiring is registered
          * todo Make sure that any [GraphQLInputType] is also registered in the process
          */
-        fun graphQLType(column: Column<*>): GraphQLType {
+        private fun graphQLType(column: Column<*>): GraphQLType {
             column.referee?.apply {
                 return GraphQLTypeReference(this.table.tableName)
             }
             val type = column.columnType
-            val graphQLType = when (type) {
+            return when (type) {
                 is IntegerColumnType -> Scalars.GraphQLInt
                 is LongColumnType -> Scalars.GraphQLLong
                 is DecimalColumnType -> Scalars.GraphQLFloat
@@ -182,7 +175,13 @@ abstract class TableWiring<T : Table>(val table: T) : WithLogging("TableWiring $
                 is EnumerationColumnType<*> -> scalarType(type.klass)
                 else -> throw RuntimeException("Unknown type ${type::class.java}: ${type.sqlType()}")
             }
-            return if (column.columnType.nullable) graphQLType else GraphQLNonNull(graphQLType)
+        }
+
+        fun inputType(column: Column<*>): GraphQLInputType = graphQLType(column) as GraphQLInputType
+
+        fun outputType(column: Column<*>): GraphQLOutputType {
+            val type = graphQLType(column)
+            return (if (column.columnType.nullable) type else GraphQLNonNull(type)) as GraphQLOutputType
         }
 
         fun scalarType(klass: Class<out Enum<*>>): GraphQLEnumType {

@@ -19,15 +19,15 @@ sealed class GraphDbArg(val name: String,
 
 class GraphDbConditionArg(name: String,
                           type: GraphQLInputType,
-                           val where: (arg: Any) -> Op<Boolean>,
+                          val where: (arg: Any) -> Op<Boolean>,
                           description: String? = null) : GraphDbArg(name, type, description) {
     constructor(name: String, column: Column<*>) : this(name,
-            TableWiring.graphQLType(column) as GraphQLInputType,
+            TableWiring.inputType(column),
             { EqOp(column, QueryParameter(it, column.columnType)) })
 
 }
 
 class GraphDbExtensionArg(name: String,
-                             type: GraphQLInputType,
-                             val modifier: Query.(arg: String) -> Query,
-                             description: String?) : GraphDbArg(name, type, description)
+                          type: GraphQLInputType,
+                          val modifier: Query.(arg: String) -> Query,
+                          description: String?) : GraphDbArg(name, type, description)

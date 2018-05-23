@@ -2,7 +2,6 @@ package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.mcgill.db.utils.toCamel
 import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
-import graphql.schema.GraphQLOutputType
 import org.jetbrains.exposed.sql.Column
 
 /**
@@ -21,7 +20,7 @@ class GraphDbField(val name: String, val column: Column<*>, val description: Str
     fun graphQLField() = graphQLFieldDefinition {
         name(name)
         description(description)
-        type(TableWiring.graphQLType(column) as GraphQLOutputType)
+        type(TableWiring.outputType(column))
     }
 
 }
