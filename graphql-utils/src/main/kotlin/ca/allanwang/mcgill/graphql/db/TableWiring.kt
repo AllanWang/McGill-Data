@@ -29,7 +29,7 @@ abstract class TableWiring<T : Table>(val table: T) : WithLogging("TableWiring $
      * Base name to be used for list result queries
      * Set to null to disable
      */
-    protected open val listFieldName: String? = tableName
+    protected open val listFieldName: String? = tableName.toLowerCase()
 
     open fun T.includedColumns(): List<Column<*>> = emptyList()
     open fun T.excludedColumns(): List<Column<*>> = emptyList()

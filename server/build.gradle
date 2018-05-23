@@ -13,8 +13,8 @@ dependencies {
 
     compile "ca.allanwang.kit:props:$KIT"
 
-    compile "com.graphql-java:graphql-spring-boot-starter:4.0.0"
-    compile "com.graphql-java:graphiql-spring-boot-starter:4.0.0"
+    compile "com.graphql-java:graphql-spring-boot-starter:$GRAPHQL_SPRING"
+    compile "com.graphql-java:graphiql-spring-boot-starter:$GRAPHQL_SPRING"
     compile "org.postgresql:postgresql:$POSTGRESQL"
 
     compile project(":ldap")

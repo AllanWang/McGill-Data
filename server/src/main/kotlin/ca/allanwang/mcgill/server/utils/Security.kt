@@ -37,8 +37,8 @@ class AuthenticationFilter : GenericFilterBean() {
         get() = logger
 
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
+        val httpRequest = request as? HttpServletRequest ?: return log.trace("Aborting non http request")
         try {
-            val httpRequest = request as? HttpServletRequest ?: return log.trace("Aborting non http request")
             log.info("p ${request.pathTranslated} c ${request.contextPath} s ${request.servletPath}")
             val authorization = httpRequest.getHeader(AUTHORIZATION_PROPERTY) ?: return
             val session = getSession(authorization) ?: return
