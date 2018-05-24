@@ -4,12 +4,13 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeReference
+import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.transactions.transaction
 
 /**
  * Helper class for generating graphql related data
  */
-open class GraphQLWiring(private vararg val wirings: TableWiring<*>) {
+open class GraphQLWiring(private vararg val wirings: FieldDbWiring<*>) {
 
     fun schema() = GraphQLSchema.newSchema()
             .query(GraphQLObjectType.newObject()
@@ -18,22 +19,22 @@ open class GraphQLWiring(private vararg val wirings: TableWiring<*>) {
                     .build())
             .build()
 
-    private val typeMapper: MutableMap<String, GraphQLObjectType> = mutableMapOf()
+    private val typeMapper: MutableMap<Table, GraphQLObjectType> = mutableMapOf()
 
     /**
      * Returns the full object type of an object reference
      */
-    fun type(tableWiring: TableWiring<*>): GraphQLOutputType {
-        val name = tableWiring.tableName
-        if (name in typeMapper) return GraphQLTypeReference(name)
-        val type = tableWiring.objectTypeFactory()
-        typeMapper[name] = type
+    fun type(fieldWiring: FieldDbWiring<*>): GraphQLOutputType {
+        val existingType = typeMapper[fieldWiring.table]
+        if (existingType != null) return GraphQLTypeReference(existingType.name)
+        val type = fieldWiring.objectTypeFactory()
+        typeMapper[fieldWiring.table] = type
         return type
     }
 
     private fun fields() = transaction {
         typeMapper.clear()
-        val fields = wirings.flatMap { it.fields(this@GraphQLWiring) }
+        val fields = wirings.map { it.field(this@GraphQLWiring) }
         typeMapper.clear()
         fields
     }
