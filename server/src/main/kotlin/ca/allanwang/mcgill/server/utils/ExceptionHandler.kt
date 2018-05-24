@@ -1,6 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE")
 
-package ca.allanwang.mcgill.graphql.server
+package ca.allanwang.mcgill.server.utils
 
 import ca.allanwang.mcgill.models.data.ErrorResponse
 import org.springframework.core.Ordered

@@ -1,6 +1,6 @@
-package ca.allanwang.mcgill.graphql.rest
+package ca.allanwang.mcgill.server.rest
 
-import ca.allanwang.mcgill.graphql.server.failBadRequest
+import ca.allanwang.mcgill.server.utils.failBadRequest
 import ca.allanwang.mcgill.models.data.Session
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController

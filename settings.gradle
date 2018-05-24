@@ -1,4 +1,4 @@
-include 'database', 'database-utils', 'database-test', 'graphql-utils', 'ldap', 'models'
+include 'database', 'database-utils', 'database-test', 'graphql-utils', 'ldap', 'models', 'server'
 
 if (!System.env.JITPACK)
     include 'graphql', 'migration'

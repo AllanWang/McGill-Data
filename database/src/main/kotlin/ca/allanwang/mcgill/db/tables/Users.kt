@@ -97,7 +97,8 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
     }
 
     fun courses(take: Int = -1) = transaction {
-        CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns).select { UserCourses.shortUser eq shortUser }
+        CourseDb.wrapRows((UserCourses innerJoin Courses).slice(Courses.columns)
+                .select { UserCourses.shortUser eq shortUser }
                 .run { if (take > 0) limit(take) else this }
                 .orderBy(Courses.year to SortOrder.DESC).orderBy(Courses.season to SortOrder.DESC))
     }
@@ -110,7 +111,8 @@ class UserDb(id: EntityID<String>) : Entity<String>(id) {
     }
 
     fun groups(take: Int = -1) = transaction {
-        GroupDb.wrapRows((UserGroups innerJoin Groups).slice(Groups.columns).select { UserGroups.shortUser eq shortUser }
+        GroupDb.wrapRows((UserGroups innerJoin Groups).slice(Groups.columns)
+                .select { UserGroups.shortUser eq shortUser }
                 .run { if (take > 0) limit(take) else this }
                 .orderBy(Groups.groupName to SortOrder.ASC))
     }

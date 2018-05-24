@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: graphql-todo-app
+graphql:
+  servlet:
+    mapping: /graphql
+    enabled: true
+    corsEnabled: true
+graphiql:
+  mapping: /graphiql
+  endpoint: /graphql
+  enabled: true
+  pageTitle: GraphiQL
+server:
+  port: 9000

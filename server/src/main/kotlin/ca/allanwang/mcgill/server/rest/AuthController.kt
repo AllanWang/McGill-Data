@@ -1,9 +1,9 @@
-package ca.allanwang.mcgill.graphql.rest
+package ca.allanwang.mcgill.server.rest
 
-import ca.allanwang.mcgill.graphql.Auth
-import ca.allanwang.mcgill.graphql.McGillGraphQL
-import ca.allanwang.mcgill.graphql.server.SessionResolver
-import ca.allanwang.mcgill.graphql.server.failNotFound
+import ca.allanwang.mcgill.server.Auth
+import ca.allanwang.mcgill.server.McGillServer
+import ca.allanwang.mcgill.server.utils.SessionResolver
+import ca.allanwang.mcgill.server.utils.failNotFound
 import ca.allanwang.mcgill.models.data.Session
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -18,7 +18,7 @@ class AuthController {
               @RequestParam("password") password: String,
               @RequestParam("expires_in") expiresIn: Long?): Session =
             Auth.authenticate(username, password, expiresIn)
-                    ?: failNotFound(if (McGillGraphQL.ldapEnabled.get()) "$username not found in ldap" else "Ldap disabled")
+                    ?: failNotFound(if (McGillServer.ldapEnabled.get()) "$username not found in ldap" else "Ldap disabled")
 
     /**
      * Returns the session associated with the request header

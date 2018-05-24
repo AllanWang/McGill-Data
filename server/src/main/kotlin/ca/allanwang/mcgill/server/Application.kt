@@ -1,9 +1,8 @@
-package ca.allanwang.mcgill.graphql
+package ca.allanwang.mcgill.server
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.graphql.db.KGraphDb
-import ca.allanwang.mcgill.graphql.server.SessionContext
-import graphql.schema.GraphQLObjectType
+import ca.allanwang.mcgill.graphql.McGillGraphQL
+import ca.allanwang.mcgill.server.utils.SessionContext
 import graphql.schema.GraphQLSchema
 import graphql.servlet.GraphQLContextBuilder
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +15,7 @@ import org.springframework.web.servlet.DispatcherServlet
 
 
 fun main(args: Array<String>) {
-    KGraphDb.start(null) // todo add db configs?
+    McGillServer.start()
     SpringApplication.run(ApplicationBootConfiguration::class.java, *args)
 }
 
@@ -24,14 +23,7 @@ fun main(args: Array<String>) {
 class ApplicationBootConfiguration : WithLogging("McGill GraphQL") {
 
     @Bean
-    fun schema(): GraphQLSchema {
-        return GraphQLSchema.newSchema()
-                .query(GraphQLObjectType.newObject()
-                        .name("query")
-                        .fields(KGraphDb.dbFields())
-                        .build())
-                .build()
-    }
+    fun schema(): GraphQLSchema = McGillGraphQL.schema()
 
     @Autowired
     private lateinit var servlet: DispatcherServlet

@@ -1,4 +1,4 @@
-package ca.allanwang.mcgill.graphql
+package ca.allanwang.mcgill.server
 
 import ca.allanwang.kit.logger.WithLogging
 import ca.allanwang.mcgill.db.tables.GroupDb
@@ -22,7 +22,7 @@ object Auth : WithLogging() {
      * Note that if ldap is disabled, we will allow sam=unit, password=test as a valid user
      */
     fun authenticate(sam: String, password: String, expiresIn: Long? = null): Session? {
-        if (!McGillGraphQL.ldapEnabled.get()) {
+        if (!McGillServer.ldapEnabled.get()) {
             if (sam != "unit" || password != "test") {
                 log.warn("Ldap disabled")
                 return null

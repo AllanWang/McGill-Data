@@ -1,8 +1,8 @@
-package ca.allanwang.mcgill.graphql.server
+package ca.allanwang.mcgill.server.utils
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.graphql.Auth
 import ca.allanwang.mcgill.models.data.Session
+import ca.allanwang.mcgill.server.Auth
 import graphql.servlet.GraphQLContext
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
@@ -23,24 +23,6 @@ import javax.servlet.annotation.WebFilter
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-
-//@Configuration
-//@EnableWebSecurity
-//class SecurityConfig : WebSecurityConfigurerAdapter(), Loggable by WithLogging("SecurityConfig") {
-//
-//    /**
-//     * Note that we handle authentication lazily.
-//     * We will bind a filter to check for authentication and attach a session if it exists
-//     * However, all endpoints will go through unless they explicitly request a session (by having one in the method argument)
-//     * and cannot get it from the request attributes
-//     */
-//    override fun configure(http: HttpSecurity) {
-//        http.addFilterBefore(AuthenticationFilter(), BasicAuthenticationFilter::class.java)
-//                .authorizeRequests().antMatchers("**").anyRequest()
-//    }
-//
-//}
-
 private const val AUTHORIZATION_PROPERTY = "Authorization"
 private const val BASIC = "Basic"
 private const val TOKEN = "Token"
@@ -57,16 +39,11 @@ class AuthenticationFilter : GenericFilterBean() {
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         try {
             val httpRequest = request as? HttpServletRequest ?: return log.trace("Aborting non http request")
-            log.info("p ${request.pathTranslated} c ${request.contextPath} s ${request.servletPath}")
+            log.info("path ${request.servletPath}") // todo, check if we should reject graphiql if no session found
             val authorization = httpRequest.getHeader(AUTHORIZATION_PROPERTY) ?: return
             val session = getSession(authorization) ?: return
-
             log.info("Hello $session")
-            println("HHH $session ${request.pathInfo} ${request.pathTranslated} ${request.contextPath} ${request.servletPath}")
             httpRequest.setAttribute(SESSION, session)
-            (response as HttpServletResponse).sendError(404, "Test")
-        } catch (e: Exception) {
-            log.error("Authentication Error", e)
         } finally {
             chain.doFilter(request, response)
         }
@@ -77,7 +54,6 @@ class AuthenticationFilter : GenericFilterBean() {
         if (parts.size != 2)
             return null
         val (authScheme, credentials) = parts
-        log.info("Auth $authScheme, $credentials")
         when (authScheme) {
             TOKEN -> {
                 val samAndToken = Session.decodeHeader(credentials)?.split(":")
@@ -112,10 +88,6 @@ class AuthenticationFilter : GenericFilterBean() {
 
 class SessionContext(request: Optional<HttpServletRequest>,
                      response: Optional<HttpServletResponse>) : GraphQLContext(request, response) {
-
-    init {
-        println("Session context")
-    }
 
     val session: Session? by lazy {
         if (!request.isPresent) return@lazy null
