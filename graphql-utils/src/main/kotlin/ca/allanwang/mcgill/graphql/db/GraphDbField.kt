@@ -15,13 +15,6 @@ class GraphDbColField(name: String, val column: Column<*>, description: String? 
 
 }
 
-//class GraphDbColField(name: String, val column: Column<*>, description: String? = null) :
-//        GraphDbField2(name, FieldDbWiring.outputType(column), description) {
-//
-//    constructor(column: Column<*>) : this(column.name.toCamel(), column, "Query for exact match with ${column.name}")
-//
-//}
-
 open class GraphDbField(val name: String,
                         val type: GraphQLOutputType,
                         val description: String? = null) {
