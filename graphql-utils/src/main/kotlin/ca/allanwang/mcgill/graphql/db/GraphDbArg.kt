@@ -17,6 +17,13 @@ sealed class GraphDbArg(val name: String,
         description(description)
         type(type)
     }
+
+    override fun hashCode(): Int = name.hashCode()
+
+    override fun equals(other: Any?): Boolean =
+            this === other || (other is GraphDbArg && name == other.name)
+
+    override fun toString(): String = "${this::class.java.simpleName}: $name"
 }
 
 fun Collection<GraphDbArg>.toMap() = map { it.name to it }.toMap()
@@ -41,7 +48,13 @@ class GraphDbConditionArg(name: String,
     }
 
     companion object {
-        fun fold(conditions: Collection<Op<Boolean>?>) = conditions.fold<Op<Boolean>?, Op<Boolean>?>(null) { acc, op ->
+
+        /**
+         * Converts a map of argument data to a single op boolean, or null if none are supplied
+         */
+        fun fold(data: Map<GraphDbConditionArg, String>, initial: Op<Boolean>? = null) = data.entries.fold(initial) {
+            acc, (arg, value) ->
+            val op = arg.call(value)
             when {
                 op == null -> acc
                 acc == null -> op
@@ -62,5 +75,16 @@ class GraphDbExtensionArg(name: String,
     fun call(query: Query, arg: Any?): Query {
         val input: String = arg?.toString() ?: default ?: return query
         return query.modifier(input)
+    }
+
+    companion object {
+
+        /**
+         * Converts a map of argument data to a single op boolean, or null if none are supplied
+         */
+        fun fold(data: Map<GraphDbExtensionArg, String>, initial: Query) : Query = data.entries.fold(initial) {
+            acc, (arg, value) -> arg.call(acc, value)
+        }
+
     }
 }

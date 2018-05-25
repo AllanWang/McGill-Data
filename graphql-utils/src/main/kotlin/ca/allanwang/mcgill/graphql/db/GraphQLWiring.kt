@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 /**
  * Helper class for generating graphql related data
  */
-open class GraphQLWiring(private vararg val wirings: FieldDbWiring<*>) {
+open class GraphQLWiring(private vararg val wirings: FieldDbWiring<*, *>) {
 
     fun schema() = GraphQLSchema.newSchema()
             .query(GraphQLObjectType.newObject()
@@ -24,7 +24,7 @@ open class GraphQLWiring(private vararg val wirings: FieldDbWiring<*>) {
     /**
      * Returns the full object type of an object reference
      */
-    fun type(fieldWiring: FieldDbWiring<*>): GraphQLOutputType {
+    fun type(fieldWiring: FieldDbWiring<*, *>): GraphQLOutputType {
         val existingType = typeMapper[fieldWiring.table]
         if (existingType != null) return GraphQLTypeReference(existingType.name)
         val type = fieldWiring.objectTypeFactory()

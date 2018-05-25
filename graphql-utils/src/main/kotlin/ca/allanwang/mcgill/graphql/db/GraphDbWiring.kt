@@ -1,7 +1,6 @@
 package ca.allanwang.mcgill.graphql.db
 
 import ca.allanwang.kit.logger.WithLogging
-import ca.allanwang.mcgill.db.utils.toMap
 import ca.allanwang.mcgill.graphql.kotlin.graphQLFieldDefinition
 import ca.allanwang.mcgill.graphql.kotlin.graphQLObjectType
 import graphql.Scalars
@@ -37,6 +36,23 @@ data class FieldDbEnvironment(
         }.toMap()
     }
 
+    fun getQuery(wiring: FieldDbWiring<*, *>): Query? = wiring.run {
+        val conditions: MutableMap<GraphDbConditionArg, String> = mutableMapOf()
+        val extensions: MutableMap<GraphDbExtensionArg, String> = mutableMapOf()
+        for ((key, value) in this@FieldDbEnvironment.argMap) {
+            val arg = argMap[key] ?: continue
+            when (arg) {
+                is GraphDbConditionArg -> conditions[arg] = value
+                is GraphDbExtensionArg -> extensions[arg] = value
+            }
+        }
+        val condition: Op<Boolean>? = GraphDbConditionArg.fold(conditions)
+        val extension: Query.() -> Query = { GraphDbExtensionArg.fold(extensions, this) }
+        val selection = table.run { if (condition == null) selectAll() else select(condition) }
+        val statement = selection.extension()
+        statement
+    }
+
     private fun Value.extractString(): String? = when (this) {
         is ArrayValue -> values.toString()
         is BooleanValue -> isValue.toString()
@@ -56,13 +72,14 @@ data class FieldDbEnvironment(
     private companion object : WithLogging()
 }
 
-abstract class FieldDbWiring<out FIELD : GraphDbField>(val name: String,
-                                                       val table: Table,
-                                                       val returnsList: Boolean) : WithLogging() {
+abstract class FieldDbWiring<F : GraphDbField, T : Any>(val name: String,
+                                                            val table: Table,
+                                                            val returnsList: Boolean) : WithLogging() {
 
-    abstract val fieldMap: Map<String, FIELD>
+    abstract val fieldMap: Map<String, F>
 
-    abstract val argMap: Map<String, GraphDbArg>
+    open val argMap: Map<String, GraphDbArg> = (if (returnsList) table.columns.map(::GraphDbConditionArg) + listOf(limit)
+    else table.indices.filter(Index::unique).flatMap { it.columns.toList() }.map(::GraphDbConditionArg)).toMap()
 
     /**
      * Fetches data
@@ -71,7 +88,19 @@ abstract class FieldDbWiring<out FIELD : GraphDbField>(val name: String,
      * Returns list of maps if list selection
      * All outputs should be properly serializable
      */
-    abstract fun fetch(env: FieldDbEnvironment): Any?
+    fun fetch(env: FieldDbEnvironment): Any? {
+        if (env.selections.isEmpty()) return null
+        val query = env.getQuery(this) ?: return null
+        return transaction {
+            val transition = transition(env, query)
+            if (returnsList) transition.map { it.toOutput(env) }
+            else transition.firstOrNull()?.toOutput(env)
+        }
+    }
+
+    abstract fun transition(env: FieldDbEnvironment, query: Query): SizedIterable<T>
+
+    abstract fun T.toOutput(env: FieldDbEnvironment): Map<String, Any?>
 
     /**
      * Attempts to fetch the field environment for the current wiring
@@ -145,40 +174,28 @@ abstract class FieldDbWiring<out FIELD : GraphDbField>(val name: String,
 //                            , klass.enumConstants.map(Any::toString).map { EnumValueDefinition(it) }, emptyList()))
                     .build()
         }
+
     }
 
 }
 
-open class FieldTableWiring(name: String, table: Table, returnsList: Boolean) : FieldDbWiring<GraphDbColField>(name, table, returnsList) {
+abstract class FieldTableWiring(name: String, table: Table, returnsList: Boolean) : FieldDbWiring<GraphDbColField, ResultRow>(name, table, returnsList) {
 
     override val fieldMap: Map<String, GraphDbColField> = table.columns.map(::GraphDbColField).toMap()
 
-    override val argMap: Map<String, GraphDbArg> = (if (returnsList) table.columns.map(::GraphDbConditionArg) + listOf(limit)
-    else table.indices.filter(Index::unique).flatMap { it.columns.toList() }.map(::GraphDbConditionArg)).toMap()
+    override fun transition(env: FieldDbEnvironment, query: Query): SizedIterable<ResultRow> = query
 
-    override fun fetch(env: FieldDbEnvironment): Any? {
-        val columns = env.selections.mapNotNull { fieldMap[it]?.column }
-        if (columns.isEmpty()) return null
-        var condition: Op<Boolean>? = null
-        val extensions = mutableListOf<Query.() -> Query>()
-        for ((key, value) in env.argMap) {
-            val arg = argMap[key] ?: continue
-            when (arg) {
-                is GraphDbConditionArg -> {
-                    val op = arg.call(value)
-                    if (op != null)
-                        condition = if (condition == null) op else condition and op
-                }
-                is GraphDbExtensionArg -> extensions.add({ arg.call(this, value) })
-            }
-        }
-        // todo validate condition and extensions?
-        return transaction {
-            val selection = table.run { if (condition == null) selectAll() else select(condition) }
-            val statement = extensions.fold(selection) { base, extension -> base.extension() }
-            if (returnsList) statement.map { row -> row.toMap(columns) }
-            else statement.firstOrNull()?.toMap(columns)
-        }
-    }
+    override fun ResultRow.toOutput(env: FieldDbEnvironment): Map<String, Any?> = env.selections.mapNotNull {
+        val col = fieldMap[it]?.column ?: return@mapNotNull null
+        it to this[col]
+    }.toMap()
 
 }
+
+//abstract class FieldEntityWiring<ID : Comparable<ID>, E : Entity<ID>>(name: String, entityClass: EntityClass<ID, E>, returnsList: Boolean)
+//    : FieldDbWiring<GraphDbRetrievalField<ID, E>>(name, entityClass.table, returnsList) {
+//
+//    override fun fetch(env: FieldDbEnvironment, conditions: Map<GraphDbConditionArg, String>, extensions: Map<GraphDbExtensionArg, String>): Any? {
+//
+//    }
+//}
