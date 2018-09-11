@@ -3,23 +3,27 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencies {
-    compile('org.springframework.boot:spring-boot-starter-log4j2')
-    compile('org.springframework.boot:spring-boot-starter-actuator') {
+//    implementation('org.springframework.boot:spring-boot-starter-log4j2') {
+//        exclude module: 'log4j-over-slf4j'
+//    }
+    implementation('org.springframework.boot:spring-boot-starter-actuator') {
         exclude module: 'spring-boot-starter-logging'
     }
-    compile('org.springframework.boot:spring-boot-starter-web') {
+    implementation('org.springframework.boot:spring-boot-starter-web') {
         exclude module: 'spring-boot-starter-logging'
     }
 
-    compile "ca.allanwang.kit:props:$KIT"
+    implementation "ca.allanwang.kit:props:$KIT"
 
-    compile "com.graphql-java:graphql-spring-boot-starter:$GRAPHQL_SPRING"
-    compile "com.graphql-java:graphiql-spring-boot-starter:$GRAPHQL_SPRING"
-    compile "org.postgresql:postgresql:$POSTGRESQL"
+    implementation "com.graphql-java:graphql-spring-boot-starter:$GRAPHQL_SPRING"
+    implementation "com.graphql-java:graphiql-spring-boot-starter:$GRAPHQL_SPRING"
+    implementation "org.postgresql:postgresql:$POSTGRESQL"
+    implementation group: 'com.h2database', name: 'h2', version: '1.4.197'
 
-    compile project(":ldap")
-    compile project(":database")
-    compile project(":graphql")
 
-    testCompile('org.springframework.boot:spring-boot-starter-test')
+    implementation project(":ldap")
+    implementation project(":database")
+    implementation project(":graphql")
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
 }

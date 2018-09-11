@@ -1,5 +1,6 @@
 dependencies {
-    compile "com.github.AllanWang:Exposed:$EXPOSED"
+    compile "org.jetbrains.exposed:exposed:$EXPOSED"
+//    compile "com.github.AllanWang:Exposed:$EXPOSED"
     compile "ca.allanwang.kit:logger:$KIT"
     testImplementation project(":database-test")
 }

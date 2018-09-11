@@ -86,12 +86,10 @@ class AuthenticationFilter : GenericFilterBean() {
 
 }
 
-class SessionContext(request: Optional<HttpServletRequest>,
-                     response: Optional<HttpServletResponse>) : GraphQLContext(request, response) {
+class SessionContext(request: HttpServletRequest?) : GraphQLContext(request) {
 
     val session: Session? by lazy {
-        if (!request.isPresent) return@lazy null
-        request.get().getAttribute(SESSION) as? Session
+        request?.getAttribute(SESSION) as? Session
     }
 
 }
